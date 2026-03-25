@@ -1,0 +1,61 @@
+export const UI_TEXT = {
+    portalTitle: 'Corporate Admin Portal',
+    menu: {
+        corporateReport: 'Corporate Report',
+        corporateProfiles: 'Corporate Profiles',
+        incomingProfiles: 'Incoming Profiles',
+        pendingRequests: 'Pending Requests',
+        signOut: 'Sign Out',
+    },
+    tabs: {
+        corporate: 'Corporate',
+        incoming: 'Incoming',
+    },
+    buttons: {
+        accept: 'Accept',
+        microsoftLogin: 'windows Sign in with Microsoft',
+        useAnotherAccount: 'Use another account',
+        next: 'Next',
+        signIn: 'Sign in',
+        staySignedIn: 'Yes',
+        addNew: 'plus Add New',
+        submit: 'plus Submit',
+        signOut: 'Sign Out',
+        ok: 'OK',
+        search: /Search/i,
+        save: /Save/i,
+        genericSubmit: /Submit/i,
+    },
+    headings: {
+        corporateProfileDetails: /Corporate Profile Details/i,
+        incomingProfileDetails: /Incoming Profile Details/i,
+    },
+    fields: {
+        username: 'Enter your email, phone, or',
+        password: 'Enter the password for',
+        corporateId: '* Corporate ID :',
+        corporateNameThai: '* Corporate Name (Thai) :',
+        corporateNameEnglish: '* Corporate Name (English) :',
+        remark: 'Remark :',
+        incomingCorporateId: '* Corporate Id :',
+        searchAllowAccount: 'Search By Allow Account',
+        searchCorporateId: 'Corporate ID',
+    },
+    placeholders: {
+        taxId: 'Enter tax id',
+        accountNo: 'Enter Account No',
+        selectDate: 'Select Date',
+        incomingRemark: 'Enter Remark',
+    },
+    status: {
+        active: 'Active',
+        inactive: 'Inactive',
+    },
+    sendType: {
+        email: 'Email',
+        sftp: 'SFTP',
+    },
+    emailRound: {
+        round1: 'Round 1 (09.00)',
+    },
+} as const;
