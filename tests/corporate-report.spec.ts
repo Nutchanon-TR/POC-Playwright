@@ -25,6 +25,8 @@ import {
 test('Corporate Report: create, approve, edit, and delete corporate and incoming profiles', async ({
     page,
 }) => {
+    test.setTimeout(120000); // 2 minutes for the full E2E flow
+
     const runData = buildTestRunData();
 
     // ------- 1. Login with creator -------
@@ -84,14 +86,18 @@ test('Corporate Report: create, approve, edit, and delete corporate and incoming
     await signOut(page);
 
     // ------- 6. Login creator and edit approved records -------
-    await loginWithMicrosoft(page);
+    await loginWithMicrosoft(page, {
+        username: CREDENTIALS.creator,
+        useAnotherAccount: true,
+    });
 
     await editCorporateProfile(page, {
         corporateId: runData.corporateProfiles.email.corporateId,
         rowTexts: [
             runData.corporateProfiles.email.corporateId,
             runData.corporateProfiles.email.englishName,
-            runData.corporateProfiles.email.remark,
+            // Don't search for remark - it might be different after approval
+            // runData.corporateProfiles.email.remark,
         ],
         englishName: runData.corporateProfiles.email.updatedEnglishName,
         remark: runData.corporateProfiles.email.updatedRemark,

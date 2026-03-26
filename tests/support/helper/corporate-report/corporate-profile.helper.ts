@@ -3,7 +3,7 @@ import { PATTERNS, SELECTORS, UI_TEXT, URLS } from '../../constant';
 import { closeSuccessDialog, confirmVisibleDialog } from '../common/dialog.helper';
 import { selectAutocompleteOption } from '../common/form.helper';
 import { openCorporateProfiles } from '../common/navigation.helper';
-import { clickRowAction, findTableRowByTexts } from '../common/table.helper';
+import { clickRowAction, findTableRowByTexts, gotoLastPaginationPage } from '../common/table.helper';
 import type { CorporateProfileData } from '../types';
 
 async function openCorporateProfileAddForm(page: Page) {
@@ -77,7 +77,16 @@ export async function createEmailCorporateProfile(
 export async function searchCorporateProfile(page: Page, corporateId: string) {
     await openCorporateProfiles(page);
     await selectAutocompleteOption(page, UI_TEXT.fields.searchCorporateId, corporateId);
+
+    // Verify the field has the value before searching
+    const field = page.getByRole('combobox', { name: UI_TEXT.fields.searchCorporateId });
+    await expect(field).toHaveValue(corporateId);
+
     await page.getByRole('button', { name: UI_TEXT.buttons.search }).click();
+
+    // Wait for the search results to load
+    await page.waitForSelector('table', { state: 'visible', timeout: 10000 });
+    await page.waitForTimeout(500);
 }
 
 export async function editCorporateProfile(
@@ -89,7 +98,22 @@ export async function editCorporateProfile(
         remark: string;
     }
 ) {
-    await searchCorporateProfile(page, options.corporateId);
+    // await searchCorporateProfile(page, options.corporateId);
+    await openCorporateProfiles(page);
+
+    // Ensure we're on the Corporate Profiles page
+    await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 10000 });
+    await page.waitForSelector('table', { state: 'visible', timeout: 10000 });
+
+    // Click reload button to ensure we have the latest data
+    const reloadButton = page.getByRole('button', { name: 'redo Reload' });
+    if (await reloadButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await reloadButton.click();
+        await page.waitForSelector('table', { state: 'visible', timeout: 10000 });
+        await page.waitForTimeout(500);
+    }
+
+    await gotoLastPaginationPage(page);
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'edit');
 

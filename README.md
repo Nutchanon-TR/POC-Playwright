@@ -70,6 +70,7 @@ npx playwright install
 
 ```powershell
 npx playwright test
+npx playwright test --reporters=list
 ```
 
 รันเฉพาะเทส Corporate Report
