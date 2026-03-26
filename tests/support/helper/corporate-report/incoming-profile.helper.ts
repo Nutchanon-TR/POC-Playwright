@@ -17,8 +17,9 @@ function todayAsDdMmYyyy() {
 
 async function openIncomingProfileAddForm(page: Page) {
     await openIncomingProfiles(page);
-    await page.waitForTimeout(500);
-    await page.getByRole('button', { name: UI_TEXT.buttons.addNew }).click();
+    const addNewButton = page.getByRole('button', { name: UI_TEXT.buttons.addNew });
+    await expect(addNewButton).toBeVisible();
+    await addNewButton.click();
     await expect(
         page.getByRole('heading', { name: UI_TEXT.headings.incomingProfileDetails })
     ).toBeVisible();
@@ -92,6 +93,15 @@ export async function deleteIncomingProfile(
     await searchIncomingProfile(page, options.accountNo);
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'delete');
+
+    const deleteResponsePromise = page.waitForResponse(
+        (res) =>
+            res.url().includes('/corporate-report/v1/') &&
+            res.url().includes('/incoming-profiles') &&
+            res.request().method() !== 'GET' &&
+            res.status() === 200
+    );
+
     await confirmVisibleDialog(page, PATTERNS.confirmDelete);
-    await page.waitForTimeout(500);
+    await deleteResponsePromise;
 }

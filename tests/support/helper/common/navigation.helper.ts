@@ -3,23 +3,38 @@ import { UI_TEXT, URLS } from '../../constant';
 import type { PendingRequestTab } from '../types';
 
 export async function openCorporateProfiles(page: Page) {
-    await page.waitForTimeout(500);
-    await page.getByRole('link', { name: UI_TEXT.menu.corporateProfiles }).click();
+    const corporateProfilesLink = page.getByRole('link', { name: UI_TEXT.menu.corporateProfiles });
+    await expect(corporateProfilesLink).toBeVisible();
+    await corporateProfilesLink.click();
 }
 
 export async function openIncomingProfiles(page: Page) {
-    await page.waitForTimeout(500);
-    await page.getByRole('link', { name: UI_TEXT.menu.incomingProfiles }).click();
+    const incomingProfilesLink = page.getByRole('link', { name: UI_TEXT.menu.incomingProfiles });
+    await expect(incomingProfilesLink).toBeVisible();
+    await incomingProfilesLink.click();
 }
 
 export async function openPendingRequests(
     page: Page,
     tab: PendingRequestTab = UI_TEXT.tabs.corporate
 ) {
-    await page.getByText(UI_TEXT.menu.corporateReport).click();
-    await page.getByRole('link', { name: UI_TEXT.menu.pendingRequests }).click();
-    await page.waitForTimeout(500);
-    await expect(page.getByText(UI_TEXT.menu.pendingRequests)).toBeVisible();
-    await page.waitForTimeout(500);
-    await page.getByRole('menuitem', { name: tab }).click();
+    const corporateReportMenu = page.getByText(UI_TEXT.menu.corporateReport);
+    await expect(corporateReportMenu).toBeVisible();
+    await corporateReportMenu.click();
+
+    const pendingRequestsLink = page.getByRole('link', { name: UI_TEXT.menu.pendingRequests });
+    await expect(pendingRequestsLink).toBeVisible();
+    await pendingRequestsLink.click();
+
+    const pendingRequestTab = page.getByRole('menuitem', { name: tab });
+    await expect(pendingRequestTab).toBeVisible();
+    const pendingRequestsLoadPromise = page.waitForResponse(
+        (res) =>
+            res.url().includes('/corporate-report/v1/') &&
+            res.status() === 200 &&
+            res.request().method() === 'GET' &&
+            res.url().toLowerCase().includes('pending')
+    );
+    await pendingRequestTab.click();
+    await pendingRequestsLoadPromise;
 }

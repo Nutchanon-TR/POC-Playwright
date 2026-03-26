@@ -19,16 +19,18 @@ export async function loginWithMicrosoft(
 
     await page.goto(URLS.login);
 
-    await page.getByRole('button', { name: UI_TEXT.buttons.accept }).click();
-    await page.waitForTimeout(500);
-    await page
-        .getByRole('button', { name: UI_TEXT.buttons.microsoftLogin })
-        .click();
+    const acceptButton = page.getByRole('button', { name: UI_TEXT.buttons.accept });
+    await expect(acceptButton).toBeVisible();
+    await acceptButton.click();
+
+    const microsoftLoginButton = page.getByRole('button', { name: UI_TEXT.buttons.microsoftLogin });
+    await expect(microsoftLoginButton).toBeVisible();
+    await microsoftLoginButton.click();
 
     if (useAnotherAccount) {
-        await page
-            .getByRole('button', { name: UI_TEXT.buttons.useAnotherAccount })
-            .click();
+        const useAnotherAccountButton = page.getByRole('button', { name: UI_TEXT.buttons.useAnotherAccount });
+        await expect(useAnotherAccountButton).toBeVisible();
+        await useAnotherAccountButton.click();
     }
 
     await page.getByRole('textbox', { name: UI_TEXT.fields.username }).click();

@@ -9,8 +9,15 @@ export async function gotoLastPaginationPage(page: Page) {
         .filter({ hasText: PATTERNS.pagination });
 
     if (await paginationItems.count()) {
+        const paginationLoadPromise = page.waitForResponse(
+            (res) =>
+                res.url().includes('/corporate-report/v1/') &&
+                res.status() === 200 &&
+                res.request().method() === 'GET' &&
+                res.url().toLowerCase().includes('pending')
+        );
         await paginationItems.last().click();
-        await page.waitForTimeout(500);
+        await paginationLoadPromise;
     }
 }
 

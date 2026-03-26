@@ -24,6 +24,21 @@ export async function actOnPendingRequest(
             .click();
     }
 
+    const actionSubmitPromise = page.waitForResponse(
+        (res) =>
+            res.url().includes('/corporate-report/v1/') &&
+            res.status() === 200 &&
+            res.request().method() !== 'GET'
+    );
+
+    const pendingListReloadPromise = page.waitForResponse(
+        (res) =>
+            res.url().includes('/corporate-report/v1/') &&
+            res.status() === 200 &&
+            res.request().method() === 'GET' &&
+            res.url().toLowerCase().includes('pending')
+    );
+
     await confirmVisibleDialog(
         page,
         options.action === 'approve'
@@ -32,5 +47,6 @@ export async function actOnPendingRequest(
         options.remark
     );
 
-    await page.waitForTimeout(500);
+    await actionSubmitPromise;
+    await pendingListReloadPromise;
 }
