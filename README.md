@@ -69,26 +69,25 @@ npx playwright install
 รันทุกเทส
 
 ```powershell
-npx playwright test
-npx playwright test --reporters=list
+npm run test
 ```
 
 รันเฉพาะเทส Corporate Report
 
 ```powershell
-npx playwright test tests/corporate-report.spec.ts
+npm run test:corporate
 ```
 
 รันเฉพาะบน Chromium
 
 ```powershell
-npx playwright test tests/corporate-report.spec.ts --project=chromium
+npm run test:chromium
 ```
 
 เปิดรายงานหลังรัน
 
 ```powershell
-npx playwright show-report
+npm run report
 ```
 
 npx playwright codegen https://corpadmin-dev.se.scb.co.th/

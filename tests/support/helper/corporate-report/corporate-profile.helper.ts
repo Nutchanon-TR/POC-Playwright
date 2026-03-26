@@ -98,22 +98,11 @@ export async function editCorporateProfile(
         remark: string;
     }
 ) {
-    // await searchCorporateProfile(page, options.corporateId);
-    await openCorporateProfiles(page);
+    await searchCorporateProfile(page, options.corporateId);
 
-    // Ensure we're on the Corporate Profiles page
-    await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 10000 });
+    // Wait for the table to update
     await page.waitForSelector('table', { state: 'visible', timeout: 10000 });
 
-    // Click reload button to ensure we have the latest data
-    const reloadButton = page.getByRole('button', { name: 'redo Reload' });
-    if (await reloadButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await reloadButton.click();
-        await page.waitForSelector('table', { state: 'visible', timeout: 10000 });
-        await page.waitForTimeout(500);
-    }
-
-    await gotoLastPaginationPage(page);
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'edit');
 

@@ -11,7 +11,7 @@ export async function confirmVisibleDialog(
     buttonPattern: RegExp,
     remark?: string
 ) {
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('dialog').first();
     await dialog.waitFor({ state: 'visible', timeout: 3000 }).catch(() => { });
 
     if (!(await dialog.isVisible().catch(() => false))) {

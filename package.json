@@ -2,7 +2,12 @@
   "name": "cap-corporate-report-frontend-poc-playwright",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test",
+    "test:corporate": "playwright test tests/corporate-report.spec.ts",
+    "test:chromium": "playwright test tests/corporate-report.spec.ts --project=chromium",
+    "report": "playwright show-report"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
