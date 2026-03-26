@@ -1,16 +1,9 @@
 import type { Page } from '@playwright/test';
-import { UI_TEXT } from '../constant';
+import { UI_TEXT } from '../../constant';
 
 export async function closeSuccessDialog(page: Page) {
-    const dialog = page.getByRole('dialog');
-    await dialog.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
-
-    if (await dialog.isVisible().catch(() => false)) {
-        const okButton = dialog.getByRole('button', { name: UI_TEXT.buttons.ok });
-        if (await okButton.count()) {
-            await okButton.first().click();
-        }
-    }
+    await page.locator('span').filter({ hasText: 'Request Submitted!' }).click();
+    await page.getByRole('button', { name: UI_TEXT.buttons.ok }).click();
 }
 
 export async function confirmVisibleDialog(
@@ -19,7 +12,7 @@ export async function confirmVisibleDialog(
     remark?: string
 ) {
     const dialog = page.getByRole('dialog');
-    await dialog.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+    await dialog.waitFor({ state: 'visible', timeout: 3000 }).catch(() => { });
 
     if (!(await dialog.isVisible().catch(() => false))) {
         return;

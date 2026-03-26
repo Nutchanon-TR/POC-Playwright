@@ -1,7 +1,7 @@
 export const TEST_CONTENT = {
     names: {
-        sftpThai: 'เธเธฃเธดเธฉเธฑเธ—เธ—เธ”เธชเธญเธเน€เธญเธชเน€เธญเธเธ—เธตเธเธต',
-        emailThai: 'เธเธฃเธดเธฉเธฑเธ—เธ—เธ”เธชเธญเธเธญเธตเน€เธกเธฅ',
+        sftpThai: 'ทดสอบ',
+        emailThai: 'ทดสอบ',
         sftpEnglish: 'Autotest SFTP',
         emailEnglish: 'Autotest EMAIL',
         updatedEmailEnglish: 'Autotest EMAIL Updated',

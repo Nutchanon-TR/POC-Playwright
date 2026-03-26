@@ -90,6 +90,8 @@ npx playwright test tests/corporate-report.spec.ts --project=chromium
 npx playwright show-report
 ```
 
+npx playwright codegen https://corpadmin-dev.se.scb.co.th/
+
 ## หมายเหตุ
 
 - `playwright.config.ts` กำหนด `testDir` เป็น `./tests`

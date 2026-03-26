@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { PATTERNS } from '../constant';
+import { PATTERNS } from '../../constant';
 
 type RowAction = 'edit' | 'delete' | 'approve' | 'reject';
 
@@ -10,7 +10,7 @@ export async function gotoLastPaginationPage(page: Page) {
 
     if (await paginationItems.count()) {
         await paginationItems.last().click();
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
     }
 }
 

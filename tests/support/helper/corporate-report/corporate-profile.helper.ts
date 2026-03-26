@@ -1,10 +1,10 @@
 import { expect, type Page } from '@playwright/test';
-import { PATTERNS, SELECTORS, UI_TEXT, URLS } from '../constant';
-import { closeSuccessDialog, confirmVisibleDialog } from './dialog.helper';
-import { selectAutocompleteOption } from './form.helper';
-import { openCorporateProfiles } from './navigation.helper';
-import { clickRowAction, findTableRowByTexts } from './table.helper';
-import type { CorporateProfileData } from './types';
+import { PATTERNS, SELECTORS, UI_TEXT, URLS } from '../../constant';
+import { closeSuccessDialog, confirmVisibleDialog } from '../common/dialog.helper';
+import { selectAutocompleteOption } from '../common/form.helper';
+import { openCorporateProfiles } from '../common/navigation.helper';
+import { clickRowAction, findTableRowByTexts } from '../common/table.helper';
+import type { CorporateProfileData } from '../types';
 
 async function openCorporateProfileAddForm(page: Page) {
     await openCorporateProfiles(page);
@@ -52,7 +52,8 @@ export async function createEmailCorporateProfile(
     await openCorporateProfileAddForm(page);
     await fillCorporateProfileBaseFields(page, profile);
 
-    await page.getByText(UI_TEXT.sendType.email).click();
+    await page.locator('label').filter({ hasText: UI_TEXT.sendType.email }).click();
+
 
     if (profile.taxId) {
         await page.getByPlaceholder(UI_TEXT.placeholders.taxId).fill(profile.taxId);
@@ -113,5 +114,5 @@ export async function deleteCorporateProfile(
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'delete');
     await confirmVisibleDialog(page, PATTERNS.confirmDelete);
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
 }

@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
-import { PATTERNS } from '../constant';
-import { confirmVisibleDialog } from './dialog.helper';
-import { openPendingRequests } from './navigation.helper';
-import { clickRowAction, findTableRowByTexts, gotoLastPaginationPage } from './table.helper';
-import type { PendingRequestOptions } from './types';
+import { PATTERNS } from '../../constant';
+import { confirmVisibleDialog } from '../common/dialog.helper';
+import { openPendingRequests } from '../common/navigation.helper';
+import { clickRowAction, findTableRowByTexts, gotoLastPaginationPage } from '../common/table.helper';
+import type { PendingRequestOptions } from '../types';
 
 export async function actOnPendingRequest(
     page: Page,
@@ -32,5 +32,5 @@ export async function actOnPendingRequest(
         options.remark
     );
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
 }

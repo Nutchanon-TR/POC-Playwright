@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import { SELECTORS, UI_TEXT } from '../constant';
+import { SELECTORS, UI_TEXT } from '../../constant';
 
 export async function selectAutocompleteOption(
     page: Page,
@@ -13,10 +13,7 @@ export async function selectAutocompleteOption(
 }
 
 export async function selectFirstIncomingCorporateId(page: Page) {
-    const corporateIdCombobox = page.getByRole('combobox', {
-        name: UI_TEXT.fields.incomingCorporateId,
-    });
-    await corporateIdCombobox.click();
+    await page.getByRole('combobox', { name: UI_TEXT.fields.incomingCorporateId }).click();
 
     const visibleDropdownOptions = page.locator(SELECTORS.antSelectVisibleOptions);
     await expect(visibleDropdownOptions.first()).toBeVisible();

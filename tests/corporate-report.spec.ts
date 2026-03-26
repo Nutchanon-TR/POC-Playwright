@@ -29,6 +29,7 @@ test('Corporate Report: create, approve, edit, and delete corporate and incoming
 
     // ------- 1. Login with creator -------
     await loginWithMicrosoft(page);
+    await page.getByText(UI_TEXT.menu.corporateReport).click();
 
     // ------- 2. Create initial requests -------
     await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);

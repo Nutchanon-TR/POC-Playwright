@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import { CREDENTIALS, SELECTORS, UI_TEXT, URLS } from '../constant';
+import { CREDENTIALS, SELECTORS, UI_TEXT, URLS } from '../../constant';
 
 type LoginOptions = {
     username?: string;
@@ -20,6 +20,7 @@ export async function loginWithMicrosoft(
     await page.goto(URLS.login);
 
     await page.getByRole('button', { name: UI_TEXT.buttons.accept }).click();
+    await page.waitForTimeout(500);
     await page
         .getByRole('button', { name: UI_TEXT.buttons.microsoftLogin })
         .click();

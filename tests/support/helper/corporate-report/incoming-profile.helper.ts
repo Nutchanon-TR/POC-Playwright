@@ -1,10 +1,10 @@
 import { expect, type Page } from '@playwright/test';
-import { PATTERNS, UI_TEXT, URLS } from '../constant';
-import { closeSuccessDialog, confirmVisibleDialog } from './dialog.helper';
-import { selectFirstIncomingCorporateId } from './form.helper';
-import { openIncomingProfiles } from './navigation.helper';
-import { clickRowAction, findTableRowByTexts } from './table.helper';
-import type { IncomingProfileData } from './types';
+import { PATTERNS, UI_TEXT, URLS } from '../../constant';
+import { closeSuccessDialog, confirmVisibleDialog } from '../common/dialog.helper';
+import { selectFirstIncomingCorporateId } from '../common/form.helper';
+import { openIncomingProfiles } from '../common/navigation.helper';
+import { clickRowAction, findTableRowByTexts } from '../common/table.helper';
+import type { IncomingProfileData } from '../types';
 
 function todayAsDdMmYyyy() {
     const today = new Date();
@@ -17,6 +17,7 @@ function todayAsDdMmYyyy() {
 
 async function openIncomingProfileAddForm(page: Page) {
     await openIncomingProfiles(page);
+    await page.waitForTimeout(500);
     await page.getByRole('button', { name: UI_TEXT.buttons.addNew }).click();
     await expect(
         page.getByRole('heading', { name: UI_TEXT.headings.incomingProfileDetails })
@@ -92,5 +93,5 @@ export async function deleteIncomingProfile(
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'delete');
     await confirmVisibleDialog(page, PATTERNS.confirmDelete);
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
 }

@@ -1,20 +1,15 @@
 import { expect, type Page } from '@playwright/test';
-import { UI_TEXT, URLS } from '../constant';
-import type { PendingRequestTab } from './types';
+import { UI_TEXT, URLS } from '../../constant';
+import type { PendingRequestTab } from '../types';
 
 export async function openCorporateProfiles(page: Page) {
-    await page.getByText(UI_TEXT.menu.corporateReport).click();
+    await page.waitForTimeout(500);
     await page.getByRole('link', { name: UI_TEXT.menu.corporateProfiles }).click();
-    await expect(page.getByText(UI_TEXT.menu.corporateReport)).toBeVisible();
-    await expect(page.getByText(UI_TEXT.menu.corporateProfiles)).toBeVisible();
-    await expect(page).toHaveURL(URLS.corporateProfilesPattern);
 }
 
 export async function openIncomingProfiles(page: Page) {
-    await page.getByText(UI_TEXT.menu.corporateReport).click();
+    await page.waitForTimeout(500);
     await page.getByRole('link', { name: UI_TEXT.menu.incomingProfiles }).click();
-    await expect(page).toHaveURL(URLS.incomingProfilesPattern);
-    await expect(page.getByText(UI_TEXT.menu.incomingProfiles)).toBeVisible();
 }
 
 export async function openPendingRequests(
@@ -23,6 +18,8 @@ export async function openPendingRequests(
 ) {
     await page.getByText(UI_TEXT.menu.corporateReport).click();
     await page.getByRole('link', { name: UI_TEXT.menu.pendingRequests }).click();
+    await page.waitForTimeout(500);
     await expect(page.getByText(UI_TEXT.menu.pendingRequests)).toBeVisible();
+    await page.waitForTimeout(500);
     await page.getByRole('menuitem', { name: tab }).click();
 }

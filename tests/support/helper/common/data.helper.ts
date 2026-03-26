@@ -1,8 +1,8 @@
-import { TEST_CONTENT, UI_TEXT } from '../constant';
-import type { TestRunData } from './types';
+import { TEST_CONTENT, UI_TEXT } from '../../constant';
+import type { TestRunData } from '../types';
 
 export function buildTestRunData(timestamp = Date.now()): TestRunData {
-    const idSuffix = timestamp.toString().slice(-9);
+const idSuffix = `${Date.now().toString().slice(-6)}${Math.floor(100 + Math.random() * 900)}`;
 
     return {
         timestamp,
@@ -10,15 +10,15 @@ export function buildTestRunData(timestamp = Date.now()): TestRunData {
         corporateProfiles: {
             sftp: {
                 corporateId: `SFTP-${idSuffix}`,
-                thaiName: TEST_CONTENT.names.sftpThai,
-                englishName: TEST_CONTENT.names.sftpEnglish,
+                thaiName: TEST_CONTENT.names.sftpThai  + `-${idSuffix}`,
+                englishName: TEST_CONTENT.names.sftpEnglish + `-${idSuffix}`,
                 remark: TEST_CONTENT.remarks.sftpCreate,
                 sendType: 'SFTP',
             },
             email: {
                 corporateId: `EMAIL-${idSuffix}`,
-                thaiName: TEST_CONTENT.names.emailThai,
-                englishName: TEST_CONTENT.names.emailEnglish,
+                thaiName: TEST_CONTENT.names.emailThai + `-${idSuffix}`,
+                englishName: TEST_CONTENT.names.emailEnglish + `-${idSuffix}`,
                 remark: TEST_CONTENT.remarks.emailCreate,
                 sendType: 'Email',
                 taxId: `${timestamp + 2}`.slice(-13),
