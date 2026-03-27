@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import {
     CREDENTIALS,
     PATTERNS,
@@ -22,21 +22,11 @@ import {
     signOut,
 } from './support/helper';
 
-test.describe.serial('Corporate Report End-to-End Flow', () => {
-    let page: Page;
-    let runData: ReturnType<typeof buildTestRunData>;
+test('Corporate Report End-to-End Flow', async ({ page }) => {
+    test.setTimeout(120000); // 2 minutes for the full E2E flow
+    const runData = buildTestRunData();
 
-    test.beforeAll(async ({ browser }) => {
-        page = await browser.newPage();
-        runData = buildTestRunData();
-    });
-
-    test.afterAll(async () => {
-        await page.close();
-    });
-
-    test('Part 1: Creator creates profiles (Steps 1-6)', async () => {
-        test.setTimeout(120000);
+    await test.step('Part 1: Creator creates profiles (Steps 1-6)', async () => {
         // ------- 1. Login with creator -------
         await loginWithMicrosoft(page);
         await page.getByText(UI_TEXT.menu.corporateReport).click();
@@ -51,8 +41,7 @@ test.describe.serial('Corporate Report End-to-End Flow', () => {
         await signOut(page);
     });
 
-    test('Part 2: Approver approves and rejects creations (Steps 7-12)', async () => {
-        test.setTimeout(120000);
+    await test.step('Part 2: Approver approves and rejects creations (Steps 7-12)', async () => {
         // ------- 4. Login approver and process create requests -------
         await loginWithMicrosoft(page, {
             username: CREDENTIALS.approver,
@@ -97,8 +86,7 @@ test.describe.serial('Corporate Report End-to-End Flow', () => {
         await signOut(page);
     });
 
-    test('Part 3: Creator edits approved records (Steps 13-16)', async () => {
-        test.setTimeout(120000);
+    await test.step('Part 3: Creator edits approved records (Steps 13-16)', async () => {
         // ------- 6. Login creator and edit approved records -------
         await loginWithMicrosoft(page, {
             username: CREDENTIALS.creator,
@@ -126,8 +114,7 @@ test.describe.serial('Corporate Report End-to-End Flow', () => {
         await signOut(page);
     });
 
-    test('Part 4: Approver approves update requests (Steps 17-20)', async () => {
-        test.setTimeout(120000);
+    await test.step('Part 4: Approver approves update requests (Steps 17-20)', async () => {
         // ------- 8. Login approver and approve update requests -------
         await loginWithMicrosoft(page, {
             username: CREDENTIALS.approver,
@@ -157,10 +144,12 @@ test.describe.serial('Corporate Report End-to-End Flow', () => {
         await signOut(page);
     });
 
-    test('Part 5: Creator verifies and deletes updated records (Steps 21-26)', async () => {
-        test.setTimeout(120000);
+    await test.step('Part 5: Creator verifies and deletes updated records (Steps 21-26)', async () => {
         // ------- 10. Login creator and verify updated data -------
-        await loginWithMicrosoft(page);
+        await loginWithMicrosoft(page, {
+            username: CREDENTIALS.creator,
+            useAnotherAccount: true,
+        });
 
         await searchCorporateProfile(page, runData.corporateProfiles.email.corporateId);
         const updatedCorporateRow = await findTableRowByTexts(page, [
@@ -208,8 +197,7 @@ test.describe.serial('Corporate Report End-to-End Flow', () => {
         await signOut(page);
     });
 
-    test('Part 6: Approver approves delete requests and finishes (Steps 27-30)', async () => {
-        test.setTimeout(120000);
+    await test.step('Part 6: Approver approves delete requests and finishes (Steps 27-30)', async () => {
         // ------- 13. Login approver and approve delete requests -------
         await loginWithMicrosoft(page, {
             username: CREDENTIALS.approver,

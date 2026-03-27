@@ -580,23 +580,13 @@ await actOnPendingRequest(page, {
 
 ## 5. Helper ที่ใช้บ่อยใน flow จริง
 
-ตัวอย่างลำดับการใช้ helper แบบเดียวกับ test หลัก ซึ่งปัจจุบันครอบด้วย `test.describe.serial` และแชร์ `page` แบบรันต่อเนื่อง:
+ตัวอย่างลำดับการใช้ helper แบบเดียวกับ test หลัก ซึ่งปัจจุบันครอบด้วย `test.step` และใช้ `page` ตัวเดียวกันแบบรันต่อเนื่อง:
 
 ```ts
-test.describe.serial('Corporate Report flow', () => {
-  let page: Page;
-  let runData: ReturnType<typeof buildTestRunData>;
+test('Corporate Report flow', async ({ page }) => {
+  const runData = buildTestRunData();
 
-  test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage();
-    runData = buildTestRunData();
-  });
-
-  test.afterAll(async () => {
-    await page.close();
-  });
-
-  test('Part 1: Creator creates profiles', async () => {
+  await test.step('Part 1: Creator creates profiles', async () => {
     await loginWithMicrosoft(page);
     await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
     await createEmailCorporateProfile(page, runData.corporateProfiles.email);
@@ -604,7 +594,7 @@ test.describe.serial('Corporate Report flow', () => {
     await signOut(page);
   });
 
-  test('Part 2: Approver approves requests', async () => {
+  await test.step('Part 2: Approver approves requests', async () => {
     await loginWithMicrosoft(page, {
       username: CREDENTIALS.approver,
       useAnotherAccount: true,
