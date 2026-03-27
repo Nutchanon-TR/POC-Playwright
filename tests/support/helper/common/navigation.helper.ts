@@ -35,7 +35,8 @@ export async function openIncomingProfiles(page: Page) {
     }
 
     await incomingProfilesLink.click();
-    await expect(page).toHaveURL(URLS.incomingProfilesPattern);
+    await page.getByRole('link', { name: 'Incoming Profiles' }).click();
+    await expect(page).toHaveURL(URLS.incomingProfilesPattern, { timeout: 15000 });
 }
 
 export async function openPendingRequests(

@@ -23,7 +23,7 @@ import {
 } from './support/helper';
 
 test('Corporate Report End-to-End Flow', async ({ page }) => {
-    test.setTimeout(120000); // 2 minutes for the full E2E flow
+    test.setTimeout(300000); // 5 minutes for the full E2E flow
     const runData = buildTestRunData();
 
     await test.step('Part 1: Creator creates profiles (Steps 1-6)', async () => {

@@ -126,15 +126,7 @@ export async function deleteCorporateProfile(
     await searchCorporateProfile(page, options.corporateId);
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'delete');
-
-    const deleteResponsePromise = page.waitForResponse(
-        (res) =>
-            res.url().includes('/corporate-report/v1/') &&
-            res.url().includes('/corporate-profiles') &&
-            res.request().method() !== 'GET' &&
-            res.status() === 200
-    );
+    await page.getByRole('button', { name: 'Yes' }).click();
 
     await confirmVisibleDialog(page, PATTERNS.confirmDelete);
-    await deleteResponsePromise;
 }

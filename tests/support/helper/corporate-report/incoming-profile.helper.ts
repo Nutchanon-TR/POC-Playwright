@@ -97,6 +97,7 @@ export async function deleteIncomingProfile(
     await searchIncomingProfile(page, options.accountNo);
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'delete');
+    await page.getByRole('button', { name: 'Yes' }).click();
 
     const deleteResponsePromise = page.waitForResponse(
         (res) =>

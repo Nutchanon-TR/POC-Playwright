@@ -28,7 +28,7 @@ export default defineConfig({
   },
   expect: {
     // ถ้ารอเช็คเช่น expect(locator).toBeVisible() เกิน 6 วินาที ให้ตัดจบ (Fail)
-    timeout: 120000,
+    timeout: 6000,
   },
 
   /* Configure projects for major browsers */
