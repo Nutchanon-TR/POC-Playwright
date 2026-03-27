@@ -1,10 +1,14 @@
 import { expect, type Page } from '@playwright/test';
-import { SELECTORS, UI_TEXT } from '../../../constant';
 
+/**
+ * Generic autocomplete/combobox selector.
+ * Accepts an optional dropdownSelector for custom dropdown containers.
+ */
 export async function selectAutocompleteOption(
     page: Page,
     fieldName: string,
-    optionText: string
+    optionText: string,
+    dropdownSelector = '.ant-select-dropdown:visible .ant-select-item-option'
 ) {
     const field = page.getByRole('combobox', { name: fieldName });
     await field.click();
@@ -12,21 +16,11 @@ export async function selectAutocompleteOption(
     await page.getByRole('option', { name: optionText }).click();
 
     // Try to wait for dropdown options to appear
-    const visibleDropdownOptions = page.locator(SELECTORS.antSelectVisibleOptions);
+    const visibleDropdownOptions = page.locator(dropdownSelector);
     const hasDropdown = await visibleDropdownOptions.first().isVisible({ timeout: 2000 }).catch(() => false);
 
     if (hasDropdown) {
-        // If dropdown appeared, find and click the option with the matching text
         const option = visibleDropdownOptions.filter({ hasText: optionText });
         await option.first().click();
     }
-    // If no dropdown, the field accepts direct text input, so we're done
-}
-
-export async function selectFirstIncomingCorporateId(page: Page) {
-    await page.getByRole('combobox', { name: UI_TEXT.fields.incomingCorporateId }).click();
-
-    const visibleDropdownOptions = page.locator(SELECTORS.antSelectVisibleOptions);
-    await expect(visibleDropdownOptions.first()).toBeVisible();
-    await visibleDropdownOptions.first().click();
 }

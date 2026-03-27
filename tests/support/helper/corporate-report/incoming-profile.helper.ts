@@ -1,7 +1,6 @@
 import { expect, type Page } from '@playwright/test';
-import { PATTERNS, UI_TEXT, URLS } from '../../constant';
+import { API_PATHS, PATTERNS, SELECTORS, UI_TEXT, URLS } from '../../constant';
 import { closeSuccessDialog, confirmVisibleDialog } from '../common/ui/dialog.helper';
-import { selectFirstIncomingCorporateId } from '../common/ui/form.helper';
 import { openIncomingProfiles } from '../common/ui/navigation.helper';
 import { clickRowAction, findTableRowByTexts } from '../common/ui/table.helper';
 import type { IncomingProfileData } from '../types';
@@ -31,6 +30,29 @@ async function submitIncomingProfile(page: Page) {
     await submitButton.click();
 }
 
+/** Helper to wait for incoming profile API response */
+function waitForIncomingProfileResponse(page: Page) {
+    return page.waitForResponse(
+        (res) =>
+            res.url().includes(API_PATHS.corporateReport) &&
+            res.url().includes(API_PATHS.incomingProfiles) &&
+            res.request().method() !== 'GET' &&
+            res.status() === 200
+    );
+}
+
+/**
+ * selectFirstIncomingCorporateId — moved from common/ui/form.helper.ts
+ * because it contains business logic specific to Incoming Profile.
+ */
+async function selectFirstIncomingCorporateId(page: Page) {
+    await page.getByRole('combobox', { name: UI_TEXT.fields.incomingCorporateId }).click();
+
+    const visibleDropdownOptions = page.locator(SELECTORS.antSelectVisibleOptions);
+    await expect(visibleDropdownOptions.first()).toBeVisible();
+    await visibleDropdownOptions.first().click();
+}
+
 export async function createIncomingProfile(
     page: Page,
     profile: IncomingProfileData
@@ -38,18 +60,15 @@ export async function createIncomingProfile(
     await openIncomingProfileAddForm(page);
 
     await selectFirstIncomingCorporateId(page);
-    await page
-        .getByPlaceholder(UI_TEXT.placeholders.accountNo)
-        .fill(profile.accountNo);
-    await page
-        .getByPlaceholder(UI_TEXT.placeholders.selectDate)
-        .fill(todayAsDdMmYyyy());
+    await page.getByPlaceholder(UI_TEXT.placeholders.accountNo).fill(profile.accountNo);
+    await page.getByPlaceholder(UI_TEXT.placeholders.selectDate).fill(todayAsDdMmYyyy());
     await page.getByPlaceholder(UI_TEXT.placeholders.selectDate).press('Tab');
-    await page
-        .getByPlaceholder(UI_TEXT.placeholders.incomingRemark)
-        .fill(profile.remark);
+    await page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark).fill(profile.remark);
 
+    const responsePromise = waitForIncomingProfileResponse(page);
     await submitIncomingProfile(page);
+    await responsePromise;
+
     await expect(page).toHaveURL(URLS.incomingProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
 }
@@ -97,16 +116,10 @@ export async function deleteIncomingProfile(
     await searchIncomingProfile(page, options.accountNo);
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'delete');
+
+    // Setup waitForResponse BEFORE clicking Yes to prevent race condition
+    const deleteResponsePromise = waitForIncomingProfileResponse(page);
     await page.getByRole('button', { name: 'Yes' }).click();
-
-    const deleteResponsePromise = page.waitForResponse(
-        (res) =>
-            res.url().includes('/corporate-report/v1/') &&
-            res.url().includes('/incoming-profiles') &&
-            res.request().method() !== 'GET' &&
-            res.status() === 200
-    );
-
     await confirmVisibleDialog(page, PATTERNS.confirmDelete);
     await deleteResponsePromise;
 }

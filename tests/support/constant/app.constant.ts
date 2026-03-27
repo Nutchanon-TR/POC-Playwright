@@ -10,3 +10,10 @@ export const URLS = {
     corporateProfilesPattern: /\/corporate-report\/corporate-profiles/,
     incomingProfilesPattern: /\/corporate-report\/incoming-profiles/,
 } as const;
+
+export const API_PATHS = {
+    corporateReport: '/corporate-report/v1/',
+    corporateProfiles: '/corporate-profiles',
+    incomingProfiles: '/incoming-profiles',
+} as const;
+
