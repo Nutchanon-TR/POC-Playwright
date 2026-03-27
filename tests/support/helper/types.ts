@@ -14,6 +14,7 @@ export type CorporateProfileData = {
 export type IncomingProfileData = {
     accountNo: string;
     remark: string;
+    updatedAccountNo?: string;
     updatedRemark?: string;
     updatedStatus?: 'Active' | 'Inactive';
 };

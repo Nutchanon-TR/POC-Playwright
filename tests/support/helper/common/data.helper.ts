@@ -31,6 +31,7 @@ const idSuffix = `${Date.now().toString().slice(-6)}${Math.floor(100 + Math.rand
             approved: {
                 accountNo: `${timestamp}`.slice(-10),
                 remark: TEST_CONTENT.remarks.incomingApproveCreate,
+                updatedAccountNo: `${timestamp + 5}`.slice(-10),
                 updatedRemark: TEST_CONTENT.remarks.incomingUpdated,
                 updatedStatus: UI_TEXT.status.inactive,
             },

@@ -112,6 +112,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
         await editIncomingProfile(page, {
             accountNo: runData.incomingProfiles.approved.accountNo,
             rowTexts: [runData.incomingProfiles.approved.remark],
+            updatedAccountNo: runData.incomingProfiles.approved.updatedAccountNo,
             status: runData.incomingProfiles.approved.updatedStatus ?? UI_TEXT.status.inactive,
             remark: runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
         });
@@ -140,7 +141,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
         await actOnPendingRequest(page, {
             tab: UI_TEXT.tabs.incoming,
             texts: [
-                new RegExp(runData.incomingProfiles.approved.accountNo.split('').join('-?')),
+                new RegExp((runData.incomingProfiles.approved.updatedAccountNo || runData.incomingProfiles.approved.accountNo).split('').join('-?')),
                 runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
                 PATTERNS.updateRequest,
             ],
@@ -171,7 +172,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
             runData.corporateProfiles.email.updatedRemark
         );
 
-        await searchIncomingProfile(page, runData.incomingProfiles.approved.accountNo);
+        await searchIncomingProfile(page, runData.incomingProfiles.approved.updatedAccountNo || runData.incomingProfiles.approved.accountNo);
         const updatedIncomingRow = await findTableRowByTexts(page, [
             runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
             runData.incomingProfiles.approved.updatedStatus ?? UI_TEXT.status.inactive,
@@ -193,7 +194,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
         });
 
         await deleteIncomingProfile(page, {
-            accountNo: runData.incomingProfiles.approved.accountNo,
+            accountNo: runData.incomingProfiles.approved.updatedAccountNo || runData.incomingProfiles.approved.accountNo,
             rowTexts: [
                 runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
                 runData.incomingProfiles.approved.updatedStatus ?? UI_TEXT.status.inactive,
@@ -224,7 +225,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
         await actOnPendingRequest(page, {
             tab: UI_TEXT.tabs.incoming,
             texts: [
-                new RegExp(runData.incomingProfiles.approved.accountNo.split('').join('-?')),
+                new RegExp((runData.incomingProfiles.approved.updatedAccountNo || runData.incomingProfiles.approved.accountNo).split('').join('-?')),
                 runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
                 PATTERNS.deleteRequest,
             ],

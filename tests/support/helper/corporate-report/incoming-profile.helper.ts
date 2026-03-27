@@ -65,6 +65,7 @@ export async function editIncomingProfile(
     options: {
         accountNo: string;
         rowTexts: Array<string | RegExp>;
+        updatedAccountNo?: string;
         status: 'Active' | 'Inactive';
         remark: string;
     }
@@ -76,6 +77,9 @@ export async function editIncomingProfile(
     await expect(
         page.getByRole('heading', { name: UI_TEXT.headings.incomingProfileDetails })
     ).toBeVisible();
+    if (options.updatedAccountNo) {
+        await page.getByPlaceholder(UI_TEXT.placeholders.accountNo).fill(options.updatedAccountNo);
+    }
     await page.locator('label').filter({ hasText: options.status }).click();
     await page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark).fill(options.remark);
     await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
