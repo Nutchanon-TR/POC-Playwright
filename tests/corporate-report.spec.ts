@@ -71,13 +71,19 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
 
         await actOnPendingRequest(page, {
             tab: UI_TEXT.tabs.incoming,
-            texts: [runData.incomingProfiles.approved.remark],
+            texts: [
+                runData.incomingProfiles.approved.accountNo,
+                runData.incomingProfiles.approved.remark,
+            ],
             action: 'approve',
         });
 
         await actOnPendingRequest(page, {
             tab: UI_TEXT.tabs.incoming,
-            texts: [runData.incomingProfiles.rejected.remark],
+            texts: [
+                runData.incomingProfiles.rejected.accountNo,
+                runData.incomingProfiles.rejected.remark,
+            ],
             action: 'reject',
             remark: TEST_CONTENT.rejectReasons.incoming,
         });
@@ -134,6 +140,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
         await actOnPendingRequest(page, {
             tab: UI_TEXT.tabs.incoming,
             texts: [
+                runData.incomingProfiles.approved.accountNo,
                 runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
                 PATTERNS.updateRequest,
             ],
@@ -217,6 +224,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
         await actOnPendingRequest(page, {
             tab: UI_TEXT.tabs.incoming,
             texts: [
+                runData.incomingProfiles.approved.accountNo,
                 runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
                 PATTERNS.deleteRequest,
             ],
