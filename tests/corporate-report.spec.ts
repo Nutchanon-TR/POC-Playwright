@@ -72,7 +72,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
         await actOnPendingRequest(page, {
             tab: UI_TEXT.tabs.incoming,
             texts: [
-                runData.incomingProfiles.approved.accountNo,
+                new RegExp(runData.incomingProfiles.approved.accountNo.split('').join('-?')),
                 runData.incomingProfiles.approved.remark,
             ],
             action: 'approve',
@@ -81,7 +81,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
         await actOnPendingRequest(page, {
             tab: UI_TEXT.tabs.incoming,
             texts: [
-                runData.incomingProfiles.rejected.accountNo,
+                new RegExp(runData.incomingProfiles.rejected.accountNo.split('').join('-?')),
                 runData.incomingProfiles.rejected.remark,
             ],
             action: 'reject',
@@ -140,7 +140,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
         await actOnPendingRequest(page, {
             tab: UI_TEXT.tabs.incoming,
             texts: [
-                runData.incomingProfiles.approved.accountNo,
+                new RegExp(runData.incomingProfiles.approved.accountNo.split('').join('-?')),
                 runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
                 PATTERNS.updateRequest,
             ],
@@ -224,7 +224,7 @@ test('Corporate Report End-to-End Flow', async ({ page }) => {
         await actOnPendingRequest(page, {
             tab: UI_TEXT.tabs.incoming,
             texts: [
-                runData.incomingProfiles.approved.accountNo,
+                new RegExp(runData.incomingProfiles.approved.accountNo.split('').join('-?')),
                 runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
                 PATTERNS.deleteRequest,
             ],

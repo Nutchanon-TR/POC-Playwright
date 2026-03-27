@@ -76,7 +76,7 @@ export async function editIncomingProfile(
     await expect(
         page.getByRole('heading', { name: UI_TEXT.headings.incomingProfileDetails })
     ).toBeVisible();
-    await page.getByRole('radio', { name: options.status }).click();
+    await page.locator('label').filter({ hasText: options.status }).click();
     await page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark).fill(options.remark);
     await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
     await confirmVisibleDialog(page, PATTERNS.confirmSubmit);
