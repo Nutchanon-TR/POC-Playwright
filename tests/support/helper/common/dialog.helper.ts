@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import { UI_TEXT } from '../../constant';
 
 export async function closeSuccessDialog(page: Page) {
+    await page.getByRole('button', { name: 'Yes' }).click({ timeout: 200 }).catch(() => {});
     await page.locator('span').filter({ hasText: 'Request Submitted!' }).click();
     await page.getByRole('button', { name: UI_TEXT.buttons.ok }).click();
 }

@@ -76,6 +76,7 @@ export async function createEmailCorporateProfile(
 
 export async function searchCorporateProfile(page: Page, corporateId: string) {
     await openCorporateProfiles(page);
+    console.log(`Searching for Corporate ID: ${corporateId}`);
     await selectAutocompleteOption(page, UI_TEXT.fields.searchCorporateId, corporateId);
 
     // Verify the field has the value before searching

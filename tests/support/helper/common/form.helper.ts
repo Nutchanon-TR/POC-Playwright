@@ -9,7 +9,8 @@ export async function selectAutocompleteOption(
     const field = page.getByRole('combobox', { name: fieldName });
     await field.click();
     await field.fill(optionText);
-
+    await page.getByRole('option', { name: optionText }).click();
+    
     // Try to wait for dropdown options to appear
     const visibleDropdownOptions = page.locator(SELECTORS.antSelectVisibleOptions);
     const hasDropdown = await visibleDropdownOptions.first().isVisible({ timeout: 2000 }).catch(() => false);
