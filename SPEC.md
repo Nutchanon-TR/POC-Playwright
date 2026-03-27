@@ -580,29 +580,46 @@ await actOnPendingRequest(page, {
 
 ## 5. Helper ที่ใช้บ่อยใน flow จริง
 
-ตัวอย่างลำดับการใช้ helper แบบเดียวกับ test หลัก
+ตัวอย่างลำดับการใช้ helper แบบเดียวกับ test หลัก ซึ่งปัจจุบันครอบด้วย `test.describe.serial` และแชร์ `page` แบบรันต่อเนื่อง:
 
 ```ts
-const runData = buildTestRunData();
+test.describe.serial('Corporate Report flow', () => {
+  let page: Page;
+  let runData: ReturnType<typeof buildTestRunData>;
 
-await loginWithMicrosoft(page);
-await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
-await createEmailCorporateProfile(page, runData.corporateProfiles.email);
-await createIncomingProfile(page, runData.incomingProfiles.approved);
-await signOut(page);
+  test.beforeAll(async ({ browser }) => {
+    page = await browser.newPage();
+    runData = buildTestRunData();
+  });
 
-await loginWithMicrosoft(page, {
-  username: CREDENTIALS.approver,
-  useAnotherAccount: true,
-});
+  test.afterAll(async () => {
+    await page.close();
+  });
 
-await actOnPendingRequest(page, {
-  tab: 'Corporate',
-  texts: [
-    runData.corporateProfiles.email.corporateId,
-    runData.corporateProfiles.email.remark,
-  ],
-  action: 'approve',
+  test('Part 1: Creator creates profiles', async () => {
+    await loginWithMicrosoft(page);
+    await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
+    await createEmailCorporateProfile(page, runData.corporateProfiles.email);
+    await createIncomingProfile(page, runData.incomingProfiles.approved);
+    await signOut(page);
+  });
+
+  test('Part 2: Approver approves requests', async () => {
+    await loginWithMicrosoft(page, {
+      username: CREDENTIALS.approver,
+      useAnotherAccount: true,
+    });
+    
+    await actOnPendingRequest(page, {
+      tab: 'Corporate',
+      texts: [
+        runData.corporateProfiles.email.corporateId,
+        runData.corporateProfiles.email.remark,
+      ],
+      action: 'approve',
+    });
+    await signOut(page);
+  });
 });
 ```
 

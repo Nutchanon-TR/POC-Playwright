@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import {
     CREDENTIALS,
     PATTERNS,
@@ -22,198 +22,220 @@ import {
     signOut,
 } from './support/helper';
 
-test('Corporate Report: create, approve, edit, and delete corporate and incoming profiles', async ({
-    page,
-}) => {
-    test.setTimeout(120000); // 2 minutes for the full E2E flow
+test.describe.serial('Corporate Report End-to-End Flow', () => {
+    let page: Page;
+    let runData: ReturnType<typeof buildTestRunData>;
 
-    const runData = buildTestRunData();
-
-    // ------- 1. Login with creator -------
-    await loginWithMicrosoft(page);
-    await page.getByText(UI_TEXT.menu.corporateReport).click();
-
-    // ------- 2. Create initial requests -------
-    await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
-    await createEmailCorporateProfile(page, runData.corporateProfiles.email);
-    await createIncomingProfile(page, runData.incomingProfiles.approved);
-    await createIncomingProfile(page, runData.incomingProfiles.rejected);
-
-    // ------- 3. Sign out creator -------
-    await signOut(page);
-
-    // ------- 4. Login approver and process create requests -------
-    await loginWithMicrosoft(page, {
-        username: CREDENTIALS.approver,
-        useAnotherAccount: true,
+    test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
+        runData = buildTestRunData();
     });
 
-    await actOnPendingRequest(page, {
-        tab: UI_TEXT.tabs.corporate,
-        texts: [
+    test.afterAll(async () => {
+        await page.close();
+    });
+
+    test('Part 1: Creator creates profiles (Steps 1-6)', async () => {
+        test.setTimeout(120000);
+        // ------- 1. Login with creator -------
+        await loginWithMicrosoft(page);
+        await page.getByText(UI_TEXT.menu.corporateReport).click();
+
+        // ------- 2. Create initial requests -------
+        await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
+        await createEmailCorporateProfile(page, runData.corporateProfiles.email);
+        await createIncomingProfile(page, runData.incomingProfiles.approved);
+        await createIncomingProfile(page, runData.incomingProfiles.rejected);
+
+        // ------- 3. Sign out creator -------
+        await signOut(page);
+    });
+
+    test('Part 2: Approver approves and rejects creations (Steps 7-12)', async () => {
+        test.setTimeout(120000);
+        // ------- 4. Login approver and process create requests -------
+        await loginWithMicrosoft(page, {
+            username: CREDENTIALS.approver,
+            useAnotherAccount: true,
+        });
+
+        await actOnPendingRequest(page, {
+            tab: UI_TEXT.tabs.corporate,
+            texts: [
+                runData.corporateProfiles.email.corporateId,
+                UI_TEXT.sendType.email,
+                runData.corporateProfiles.email.remark,
+            ],
+            action: 'approve',
+        });
+
+        await actOnPendingRequest(page, {
+            tab: UI_TEXT.tabs.corporate,
+            texts: [
+                runData.corporateProfiles.sftp.corporateId,
+                UI_TEXT.sendType.sftp,
+                runData.corporateProfiles.sftp.remark,
+            ],
+            action: 'reject',
+            remark: TEST_CONTENT.rejectReasons.sftp,
+        });
+
+        await actOnPendingRequest(page, {
+            tab: UI_TEXT.tabs.incoming,
+            texts: [runData.incomingProfiles.approved.remark],
+            action: 'approve',
+        });
+
+        await actOnPendingRequest(page, {
+            tab: UI_TEXT.tabs.incoming,
+            texts: [runData.incomingProfiles.rejected.remark],
+            action: 'reject',
+            remark: TEST_CONTENT.rejectReasons.incoming,
+        });
+
+        // ------- 5. Sign out approver -------
+        await signOut(page);
+    });
+
+    test('Part 3: Creator edits approved records (Steps 13-16)', async () => {
+        test.setTimeout(120000);
+        // ------- 6. Login creator and edit approved records -------
+        await loginWithMicrosoft(page, {
+            username: CREDENTIALS.creator,
+            useAnotherAccount: true,
+        });
+
+        await editCorporateProfile(page, {
+            corporateId: runData.corporateProfiles.email.corporateId,
+            rowTexts: [
+                runData.corporateProfiles.email.corporateId,
+                runData.corporateProfiles.email.englishName,
+            ],
+            englishName: runData.corporateProfiles.email.updatedEnglishName,
+            remark: runData.corporateProfiles.email.updatedRemark,
+        });
+
+        await editIncomingProfile(page, {
+            accountNo: runData.incomingProfiles.approved.accountNo,
+            rowTexts: [runData.incomingProfiles.approved.remark],
+            status: runData.incomingProfiles.approved.updatedStatus ?? UI_TEXT.status.inactive,
+            remark: runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
+        });
+
+        // ------- 7. Sign out creator -------
+        await signOut(page);
+    });
+
+    test('Part 4: Approver approves update requests (Steps 17-20)', async () => {
+        test.setTimeout(120000);
+        // ------- 8. Login approver and approve update requests -------
+        await loginWithMicrosoft(page, {
+            username: CREDENTIALS.approver,
+            useAnotherAccount: true,
+        });
+
+        await actOnPendingRequest(page, {
+            tab: UI_TEXT.tabs.corporate,
+            texts: [
+                runData.corporateProfiles.email.corporateId,
+                runData.corporateProfiles.email.updatedRemark,
+                PATTERNS.updateRequest,
+            ],
+            action: 'approve',
+        });
+
+        await actOnPendingRequest(page, {
+            tab: UI_TEXT.tabs.incoming,
+            texts: [
+                runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
+                PATTERNS.updateRequest,
+            ],
+            action: 'approve',
+        });
+
+        // ------- 9. Sign out approver -------
+        await signOut(page);
+    });
+
+    test('Part 5: Creator verifies and deletes updated records (Steps 21-26)', async () => {
+        test.setTimeout(120000);
+        // ------- 10. Login creator and verify updated data -------
+        await loginWithMicrosoft(page);
+
+        await searchCorporateProfile(page, runData.corporateProfiles.email.corporateId);
+        const updatedCorporateRow = await findTableRowByTexts(page, [
             runData.corporateProfiles.email.corporateId,
-            UI_TEXT.sendType.email,
-            runData.corporateProfiles.email.remark,
-        ],
-        action: 'approve',
-    });
-
-    await actOnPendingRequest(page, {
-        tab: UI_TEXT.tabs.corporate,
-        texts: [
-            runData.corporateProfiles.sftp.corporateId,
-            UI_TEXT.sendType.sftp,
-            runData.corporateProfiles.sftp.remark,
-        ],
-        action: 'reject',
-        remark: TEST_CONTENT.rejectReasons.sftp,
-    });
-
-    await actOnPendingRequest(page, {
-        tab: UI_TEXT.tabs.incoming,
-        texts: [runData.incomingProfiles.approved.remark],
-        action: 'approve',
-    });
-
-    await actOnPendingRequest(page, {
-        tab: UI_TEXT.tabs.incoming,
-        texts: [runData.incomingProfiles.rejected.remark],
-        action: 'reject',
-        remark: TEST_CONTENT.rejectReasons.incoming,
-    });
-
-    // ------- 5. Sign out approver -------
-    await signOut(page);
-
-    // ------- 6. Login creator and edit approved records -------
-    await loginWithMicrosoft(page, {
-        username: CREDENTIALS.creator,
-        useAnotherAccount: true,
-    });
-
-    await editCorporateProfile(page, {
-        corporateId: runData.corporateProfiles.email.corporateId,
-        rowTexts: [
-            runData.corporateProfiles.email.corporateId,
-            runData.corporateProfiles.email.englishName,
-            // Don't search for remark - it might be different after approval
-            // runData.corporateProfiles.email.remark,
-        ],
-        englishName: runData.corporateProfiles.email.updatedEnglishName,
-        remark: runData.corporateProfiles.email.updatedRemark,
-    });
-
-    await editIncomingProfile(page, {
-        accountNo: runData.incomingProfiles.approved.accountNo,
-        rowTexts: [runData.incomingProfiles.approved.remark],
-        status: runData.incomingProfiles.approved.updatedStatus ?? UI_TEXT.status.inactive,
-        remark: runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
-    });
-
-    // ------- 7. Sign out creator -------
-    await signOut(page);
-
-    // ------- 8. Login approver and approve update requests -------
-    await loginWithMicrosoft(page, {
-        username: CREDENTIALS.approver,
-        useAnotherAccount: true,
-    });
-
-    await actOnPendingRequest(page, {
-        tab: UI_TEXT.tabs.corporate,
-        texts: [
-            runData.corporateProfiles.email.corporateId,
+            runData.corporateProfiles.email.updatedEnglishName,
             runData.corporateProfiles.email.updatedRemark,
-            PATTERNS.updateRequest,
-        ],
-        action: 'approve',
-    });
+        ]);
+        await expect(updatedCorporateRow).toContainText(
+            runData.corporateProfiles.email.updatedEnglishName
+        );
+        await expect(updatedCorporateRow).toContainText(
+            runData.corporateProfiles.email.updatedRemark
+        );
 
-    await actOnPendingRequest(page, {
-        tab: UI_TEXT.tabs.incoming,
-        texts: [
-            runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
-            PATTERNS.updateRequest,
-        ],
-        action: 'approve',
-    });
-
-    // ------- 9. Sign out approver -------
-    await signOut(page);
-
-    // ------- 10. Login creator and verify updated data -------
-    await loginWithMicrosoft(page);
-
-    await searchCorporateProfile(page, runData.corporateProfiles.email.corporateId);
-    const updatedCorporateRow = await findTableRowByTexts(page, [
-        runData.corporateProfiles.email.corporateId,
-        runData.corporateProfiles.email.updatedEnglishName,
-        runData.corporateProfiles.email.updatedRemark,
-    ]);
-    await expect(updatedCorporateRow).toContainText(
-        runData.corporateProfiles.email.updatedEnglishName
-    );
-    await expect(updatedCorporateRow).toContainText(
-        runData.corporateProfiles.email.updatedRemark
-    );
-
-    await searchIncomingProfile(page, runData.incomingProfiles.approved.accountNo);
-    const updatedIncomingRow = await findTableRowByTexts(page, [
-        runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
-        runData.incomingProfiles.approved.updatedStatus ?? UI_TEXT.status.inactive,
-    ]);
-    await expect(updatedIncomingRow).toContainText(
-        runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated
-    );
-    await expect(updatedIncomingRow).toContainText(
-        runData.incomingProfiles.approved.updatedStatus ?? UI_TEXT.status.inactive
-    );
-
-    // ------- 11. Delete updated records -------
-    await deleteCorporateProfile(page, {
-        corporateId: runData.corporateProfiles.email.corporateId,
-        rowTexts: [
-            runData.corporateProfiles.email.corporateId,
-            runData.corporateProfiles.email.updatedRemark,
-        ],
-    });
-
-    await deleteIncomingProfile(page, {
-        accountNo: runData.incomingProfiles.approved.accountNo,
-        rowTexts: [
+        await searchIncomingProfile(page, runData.incomingProfiles.approved.accountNo);
+        const updatedIncomingRow = await findTableRowByTexts(page, [
             runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
             runData.incomingProfiles.approved.updatedStatus ?? UI_TEXT.status.inactive,
-        ],
+        ]);
+        await expect(updatedIncomingRow).toContainText(
+            runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated
+        );
+        await expect(updatedIncomingRow).toContainText(
+            runData.incomingProfiles.approved.updatedStatus ?? UI_TEXT.status.inactive
+        );
+
+        // ------- 11. Delete updated records -------
+        await deleteCorporateProfile(page, {
+            corporateId: runData.corporateProfiles.email.corporateId,
+            rowTexts: [
+                runData.corporateProfiles.email.corporateId,
+                runData.corporateProfiles.email.updatedRemark,
+            ],
+        });
+
+        await deleteIncomingProfile(page, {
+            accountNo: runData.incomingProfiles.approved.accountNo,
+            rowTexts: [
+                runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
+                runData.incomingProfiles.approved.updatedStatus ?? UI_TEXT.status.inactive,
+            ],
+        });
+
+        // ------- 12. Sign out creator -------
+        await signOut(page);
     });
 
-    // ------- 12. Sign out creator -------
-    await signOut(page);
+    test('Part 6: Approver approves delete requests and finishes (Steps 27-30)', async () => {
+        test.setTimeout(120000);
+        // ------- 13. Login approver and approve delete requests -------
+        await loginWithMicrosoft(page, {
+            username: CREDENTIALS.approver,
+            useAnotherAccount: true,
+        });
 
-    // ------- 13. Login approver and approve delete requests -------
-    await loginWithMicrosoft(page, {
-        username: CREDENTIALS.approver,
-        useAnotherAccount: true,
+        await actOnPendingRequest(page, {
+            tab: UI_TEXT.tabs.corporate,
+            texts: [
+                runData.corporateProfiles.email.corporateId,
+                runData.corporateProfiles.email.updatedRemark,
+                PATTERNS.deleteRequest,
+            ],
+            action: 'approve',
+        });
+
+        await actOnPendingRequest(page, {
+            tab: UI_TEXT.tabs.incoming,
+            texts: [
+                runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
+                PATTERNS.deleteRequest,
+            ],
+            action: 'approve',
+        });
+
+        // ------- 14. Final sign out -------
+        await signOut(page);
     });
-
-    await actOnPendingRequest(page, {
-        tab: UI_TEXT.tabs.corporate,
-        texts: [
-            runData.corporateProfiles.email.corporateId,
-            runData.corporateProfiles.email.updatedRemark,
-            PATTERNS.deleteRequest,
-        ],
-        action: 'approve',
-    });
-
-    await actOnPendingRequest(page, {
-        tab: UI_TEXT.tabs.incoming,
-        texts: [
-            runData.incomingProfiles.approved.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
-            PATTERNS.deleteRequest,
-        ],
-        action: 'approve',
-    });
-
-    // ------- 14. Final sign out -------
-    await signOut(page);
 });
