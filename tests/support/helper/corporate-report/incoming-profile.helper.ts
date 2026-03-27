@@ -1,9 +1,9 @@
 import { expect, type Page } from '@playwright/test';
 import { PATTERNS, UI_TEXT, URLS } from '../../constant';
-import { closeSuccessDialog, confirmVisibleDialog } from '../common/dialog.helper';
-import { selectFirstIncomingCorporateId } from '../common/form.helper';
-import { openIncomingProfiles } from '../common/navigation.helper';
-import { clickRowAction, findTableRowByTexts } from '../common/table.helper';
+import { closeSuccessDialog, confirmVisibleDialog } from '../common/ui/dialog.helper';
+import { selectFirstIncomingCorporateId } from '../common/ui/form.helper';
+import { openIncomingProfiles } from '../common/ui/navigation.helper';
+import { clickRowAction, findTableRowByTexts } from '../common/ui/table.helper';
 import type { IncomingProfileData } from '../types';
 
 function todayAsDdMmYyyy() {

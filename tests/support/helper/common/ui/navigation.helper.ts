@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
-import { UI_TEXT, URLS } from '../../constant';
-import type { PendingRequestTab } from '../types';
+import { UI_TEXT, URLS } from '../../../constant';
+import type { PendingRequestTab } from '../../types';
 
 export async function openCorporateProfiles(page: Page) {
     const corporateProfilesLink = page.getByRole('link', { name: UI_TEXT.menu.corporateProfiles });

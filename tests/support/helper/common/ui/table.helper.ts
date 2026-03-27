@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { PATTERNS } from '../../constant';
+import { PATTERNS } from '../../../constant';
 
 type RowAction = 'edit' | 'delete' | 'approve' | 'reject';
 

@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import { CREDENTIALS, SELECTORS, UI_TEXT, URLS } from '../../constant';
+import { CREDENTIALS, SELECTORS, UI_TEXT, URLS } from '../../../constant';
 
 type LoginOptions = {
     username?: string;

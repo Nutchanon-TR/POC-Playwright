@@ -1,9 +1,9 @@
 import { expect, type Page } from '@playwright/test';
 import { PATTERNS, SELECTORS, UI_TEXT, URLS } from '../../constant';
-import { closeSuccessDialog, confirmVisibleDialog } from '../common/dialog.helper';
-import { selectAutocompleteOption } from '../common/form.helper';
-import { openCorporateProfiles } from '../common/navigation.helper';
-import { clickRowAction, findTableRowByTexts, gotoLastPaginationPage } from '../common/table.helper';
+import { closeSuccessDialog, confirmVisibleDialog } from '../common/ui/dialog.helper';
+import { selectAutocompleteOption } from '../common/ui/form.helper';
+import { openCorporateProfiles } from '../common/ui/navigation.helper';
+import { clickRowAction, findTableRowByTexts, gotoLastPaginationPage } from '../common/ui/table.helper';
 import type { CorporateProfileData } from '../types';
 
 async function openCorporateProfileAddForm(page: Page) {

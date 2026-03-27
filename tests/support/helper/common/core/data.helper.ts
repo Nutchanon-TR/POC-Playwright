@@ -1,5 +1,5 @@
-import { TEST_CONTENT, UI_TEXT } from '../../constant';
-import type { TestRunData } from '../types';
+import { TEST_CONTENT, UI_TEXT } from '../../../constant';
+import type { TestRunData } from '../../types';
 
 export function buildTestRunData(timestamp = Date.now()): TestRunData {
 const idSuffix = `${Date.now().toString().slice(-6)}${Math.floor(100 + Math.random() * 900)}`;
