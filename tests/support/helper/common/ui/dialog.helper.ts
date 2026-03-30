@@ -9,13 +9,16 @@ export async function closeSuccessDialog(page: Page) {
     if (await yesBtn.isVisible({ timeout: 2000 })) {
         await yesBtn.click();
     }
-    await page.locator('span').filter({ hasText: 'Request Submitted!' }).click();
-    await page.getByRole('button', { name: /ok/i }).click();
+    // Wait for the success modal to appear and click OK to dismiss it
+    // The modal has role='dialog' and contains "Request Submitted!" text
+    const successDialog = page.getByRole('dialog').filter({ hasText: 'Request Submitted!' });
+    await successDialog.waitFor({ state: 'visible', timeout: 10000 });
+    await successDialog.getByRole('button', { name: /ok/i }).click();
 }
 
 /**
  * Confirms a visible dialog by optionally filling a remark and clicking a confirm button.
- * Uses proper visibility checks instead of silent .catch(() => {}).
+ * Waits for the dialog to appear with a short timeout, then interacts with it if present.
  */
 export async function confirmVisibleDialog(
     page: Page,
@@ -23,11 +26,6 @@ export async function confirmVisibleDialog(
     remark?: string
 ) {
     const dialog = page.getByRole('dialog').first();
-
-    if (!(await dialog.isVisible())) {
-        return;
-    }
-
     if (remark) {
         const remarkInput = dialog.getByRole('textbox').first();
         if (await remarkInput.isVisible()) {

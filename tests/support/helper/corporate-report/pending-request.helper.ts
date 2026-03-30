@@ -14,11 +14,10 @@ export async function actOnPendingRequest(
 
     const row = await findTableRowByTexts(page, options.texts);
 
-    // Use Playwright's .or() locator instead of try/catch for auto-retry
+    // The approve/reject actions are rendered as links in the Actions column
+    await row.scrollIntoViewIfNeeded();
     await row.hover();
-    const inlineBtn = row.getByRole('button', { name: new RegExp(options.action, 'i') }).first();
-    const fallbackBtn = page.getByRole('button', { name: new RegExp(options.action, 'i') }).first();
-    await inlineBtn.or(fallbackBtn).click();
+    await row.getByRole('link', { name: new RegExp(options.action, 'i') }).click();
 
     await confirmVisibleDialog(
         page,
@@ -30,4 +29,7 @@ export async function actOnPendingRequest(
 
     await page.getByRole('button', { name: 'Yes' }).click();
     await page.getByLabel('Close', { exact: true }).click();
+    // After clicking Yes, the approval/rejection is processed
+    // The UI shows a notification toast (not a dialog), so we just need to wait for the table to reload
+    await page.waitForLoadState('networkidle');
 }

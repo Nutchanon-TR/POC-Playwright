@@ -103,6 +103,9 @@ export async function editIncomingProfile(
     await page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark).fill(options.remark);
     await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
     await confirmVisibleDialog(page, PATTERNS.confirmSubmit);
+
+    // Wait for navigation back to the listing page and then the success dialog
+    await expect(page).toHaveURL(URLS.incomingProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
 }
 

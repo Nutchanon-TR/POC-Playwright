@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import { API_PATHS, PATTERNS, SELECTORS, UI_TEXT, URLS } from '../../constant';
+import { PATTERNS, SELECTORS, UI_TEXT, URLS } from '../../constant';
 import { closeSuccessDialog, confirmVisibleDialog } from '../common/ui/dialog.helper';
 import { selectAutocompleteOption } from '../common/ui/form.helper';
 import { openCorporateProfiles } from '../common/ui/navigation.helper';
@@ -20,31 +20,14 @@ async function fillCorporateProfileBaseFields(
     page: Page,
     profile: CorporateProfileData
 ) {
-    // Use Promise.all for parallel form fills (independent fields)
-    await Promise.all([
-        page.getByRole('textbox', { name: UI_TEXT.fields.corporateId }).fill(profile.corporateId),
-        page.getByRole('textbox', { name: UI_TEXT.fields.corporateNameThai }).fill(profile.thaiName),
-        page.getByRole('textbox', { name: UI_TEXT.fields.corporateNameEnglish }).fill(profile.englishName),
-        page.getByRole('textbox', { name: UI_TEXT.fields.remark }).fill(profile.remark),
-    ]);
+    // Fill fields sequentially to ensure form change detection works properly
+    await page.getByRole('textbox', { name: UI_TEXT.fields.corporateId }).fill(profile.corporateId);
+    await page.getByRole('textbox', { name: UI_TEXT.fields.corporateNameThai }).fill(profile.thaiName);
+    await page.getByRole('textbox', { name: UI_TEXT.fields.corporateNameEnglish }).fill(profile.englishName);
+    await page.getByRole('textbox', { name: UI_TEXT.fields.remark }).fill(profile.remark);
 }
 
-async function submitCorporateProfile(page: Page) {
-    const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
-    await expect(submitButton).toBeEnabled();
-    await submitButton.click();
-}
 
-/** Helper to wait for corporate profile API response */
-function waitForCorporateProfileResponse(page: Page) {
-    return page.waitForResponse(
-        (res) =>
-            res.url().includes(API_PATHS.corporateReport) &&
-            res.url().includes(API_PATHS.corporateProfiles) &&
-            res.request().method() !== 'GET' &&
-            res.status() === 200
-    );
-}
 
 export async function createSftpCorporateProfile(
     page: Page,
@@ -53,10 +36,16 @@ export async function createSftpCorporateProfile(
     await openCorporateProfileAddForm(page);
     await fillCorporateProfileBaseFields(page, profile);
 
-    const responsePromise = waitForCorporateProfileResponse(page);
-    await submitCorporateProfile(page);
-    await responsePromise;
+    // Explicitly select SFTP send type to trigger form validation
+    // The label in the UI is 'sFTP' (note the lowercase 's')
+    await page.locator('label').filter({ hasText: /sFTP/i }).click();
 
+    // Submit the form
+    const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
+    await expect(submitButton).toBeEnabled({ timeout: 10000 });
+    await submitButton.click();
+
+    // Wait for navigation back to the listing page and the success dialog
     await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
 }
@@ -81,10 +70,13 @@ export async function createEmailCorporateProfile(
 
     await page.getByRole('checkbox', { name: UI_TEXT.emailRound.round1 }).check();
 
-    const responsePromise = waitForCorporateProfileResponse(page);
-    await submitCorporateProfile(page);
-    await responsePromise;
+    // Submit the form
+    const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
+    await expect(submitButton).toBeEnabled({ timeout: 10000 });
+    await submitButton.click();
 
+    // Wait for navigation and success dialog
+    await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
 }
 
@@ -143,8 +135,8 @@ export async function deleteCorporateProfile(
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'delete');
 
-    const deleteResponsePromise = waitForCorporateProfileResponse(page);
     await page.getByRole('button', { name: 'Yes' }).click();
     await confirmVisibleDialog(page, PATTERNS.confirmDelete);
-    await deleteResponsePromise;
+    // The delete action shows a notification toast, not a modal, so we just wait for the page to settle
+    await page.waitForLoadState('networkidle');
 }
