@@ -2,10 +2,6 @@ import { TEST_CONTENT, UI_TEXT } from '../../constant';
 import { generateIdSuffix, lastDigits } from '../common/core/data.helper';
 import type { TestRunData } from '../types';
 
-/**
- * Factory function that builds all test data for a Corporate Report E2E run.
- * Domain-specific — uses TEST_CONTENT and UI_TEXT constants.
- */
 export function buildTestRunData(timestamp = Date.now()): TestRunData {
     const idSuffix = generateIdSuffix();
 

@@ -102,8 +102,7 @@ tests/support/helper/
 
 ### Configuration & Documentation
 - `playwright.config.ts` - Playwright configuration
-- `REPORT.md` - รายงานการ Refactor และ Architecture Decisions
-- `SPEC.md` - รายละเอียด Helper Function Specifications
+- `SPEC.md` - รายละเอียด Helper Function Specifications และ Technical Notes
 
 ## วิธีรัน Playwright
 

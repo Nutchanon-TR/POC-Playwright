@@ -30,7 +30,6 @@ async function submitIncomingProfile(page: Page) {
     await submitButton.click();
 }
 
-/** Helper to wait for incoming profile API response */
 function waitForIncomingProfileResponse(page: Page) {
     return page.waitForResponse(
         (res) =>
@@ -41,10 +40,6 @@ function waitForIncomingProfileResponse(page: Page) {
     );
 }
 
-/**
- * selectFirstIncomingCorporateId — moved from common/ui/form.helper.ts
- * because it contains business logic specific to Incoming Profile.
- */
 async function selectFirstIncomingCorporateId(page: Page) {
     await page.getByRole('combobox', { name: UI_TEXT.fields.incomingCorporateId }).click();
 
@@ -104,7 +99,6 @@ export async function editIncomingProfile(
     await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
     await confirmVisibleDialog(page, PATTERNS.confirmSubmit);
 
-    // Wait for navigation back to the listing page and then the success dialog
     await expect(page).toHaveURL(URLS.incomingProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
 }
@@ -120,7 +114,6 @@ export async function deleteIncomingProfile(
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'delete');
 
-    // Setup waitForResponse BEFORE clicking Yes to prevent race condition
     const deleteResponsePromise = waitForIncomingProfileResponse(page);
     await page.getByRole('button', { name: 'Yes' }).click();
     await confirmVisibleDialog(page, PATTERNS.confirmDelete);

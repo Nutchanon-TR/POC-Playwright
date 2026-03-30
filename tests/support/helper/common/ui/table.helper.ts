@@ -2,10 +2,6 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 type RowAction = 'edit' | 'delete' | 'approve' | 'reject';
 
-/**
- * Navigates to the last pagination page.
- * Accepts paginationPattern as a parameter for reusability across modules.
- */
 export async function gotoLastPaginationPage(
     page: Page,
     paginationPattern: RegExp = /^[0-9]+$/

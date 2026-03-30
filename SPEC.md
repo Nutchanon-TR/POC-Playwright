@@ -135,15 +135,17 @@ await createIncomingProfile(page, runData.incomingProfiles.approved);
 
 #### `closeSuccessDialog(page)`
 
-- หน้าที่: ปิด success dialog ถ้ามี dialog โผล่ขึ้นมาหลัง submit/save
+- หน้าที่: ปิด Ant Design success modal dialog ที่มี title "Request Submitted!" หลัง submit/save
 - รับค่า:
   - `page`: Playwright `Page`
 - ใช้เมื่อ:
   - หลัง create
   - หลัง edit
-  - หลัง action ที่ระบบแสดง dialog พร้อมปุ่ม `OK`
+  - หลัง action ที่ระบบแสดง modal.success dialog พร้อมปุ่ม `OK`
 - หมายเหตุ:
-  - ถ้า dialog ไม่ขึ้น function จะไม่ throw และจะจบแบบเงียบ ๆ
+  - ใช้ `getByRole('dialog').filter({ hasText: 'Request Submitted!' })` เพื่อหลีกเลี่ยง strict mode violation
+  - จะพยายามกดปุ่ม "Yes" ก่อน (ถ้ามี) แล้วจึงรอ dialog และกด OK
+  - Dialog บางตัวอาจมี "Request Submitted!" ปรากฏใน `<div>` และ `<span>` ทำให้เกิด strict mode error ถ้าใช้ `getByText()` โดยตรง
 
 ```ts
 await closeSuccessDialog(page);
@@ -151,7 +153,7 @@ await closeSuccessDialog(page);
 
 #### `confirmVisibleDialog(page, buttonPattern, remark?)`
 
-- หน้าที่: กดยืนยัน dialog ที่เปิดอยู่ และกรอก remark ให้ถ้ามี
+- หน้าที่: กดยืนยัน dialog ถ้ามี หรือ skip ไปถ้าไม่มี dialog (เช่น approve/reject ที่แสดง notification toast แทน dialog)
 - รับค่า:
   - `page`: Playwright `Page`
   - `buttonPattern`: `RegExp` สำหรับปุ่มยืนยัน เช่น approve, reject, save, submit, delete
@@ -159,11 +161,11 @@ await closeSuccessDialog(page);
 - ใช้เมื่อ:
   - ตอน save
   - ตอน submit
-  - ตอน approve/reject
+  - ตอน approve/reject (แต่บาง action ไม่มี dialog ก็จะ skip ไป)
   - ตอน delete
 - หมายเหตุ:
-  - ถ้า dialog ยังไม่เปิด function จะ return ทันที
-  - ถ้าส่ง `remark` มา helper จะพยายามกรอกลง textbox ตัวแรกใน dialog
+  - ใช้ `try-catch` และ `waitFor()` timeout 3 วินาที - ถ้า dialog ไม่ขึ้นภายในเวลานั้นจะ return ทันที
+  - เหมาะกับ flow ที่บางครั้งมี dialog บางครั้งไม่มี (เช่น approve ที่แสดงแค่ notification toast)
 
 ```ts
 await confirmVisibleDialog(page, PATTERNS.confirmSave);
@@ -495,7 +497,7 @@ await deleteIncomingProfile(page, {
 
 #### `actOnPendingRequest(page, options)`
 
-- หน้าที่: เปิด `Pending Requests`, ไปหน้าท้ายสุด, หา row เป้าหมาย แล้วกด approve หรือ reject พร้อม confirm dialog
+- หน้าที่: เปิด `Pending Requests`, ไปหน้าท้ายสุด, หา row เป้าหมาย แล้วกด approve หรือ reject
 - รับค่า:
   - `page`: Playwright `Page`
   - `options.tab`: `'Corporate' | 'Incoming'`
@@ -505,8 +507,9 @@ await deleteIncomingProfile(page, {
 - ใช้เมื่อ:
   - approver ต้องจัดการ create/update/delete request
 - หมายเหตุ:
-  - helper จะพยายามกด action จากใน row ก่อน
-  - ถ้าไม่เจอ จะ fallback ไปคลิก row แล้วหา button จากหน้า
+  - action link อยู่ใน Actions column ของแต่ละ row (ใช้ `getByRole('link')` เพราะเป็น `<a>` tag ไม่ใช่ `<button>`)
+  - ต้อง scope locator ให้อยู่ใน row เดียวกันเพื่อหลีกเลี่ยง strict mode violation
+  - หลังกด approve/reject จะแสดง notification toast (ไม่ใช่ modal dialog) ดังนั้นใช้ `waitForLoadState('networkidle')` แทนการปิด dialog
   - ถ้า `action` เป็น `reject` ควรส่ง `remark`
 
 ```ts
@@ -623,3 +626,66 @@ test('Corporate Report flow', async ({ page }) => {
 - ถ้าต้องการหา row หรือกด action ในตาราง ใช้ helper ใน `table.helper.ts`
 - ถ้าต้องการเปิดหน้าตามเมนู ใช้ helper ใน `navigation.helper.ts`
 - ถ้าต้องการจัดการ dialog ใช้ helper ใน `dialog.helper.ts`
+
+## 7. Technical Notes & Bug Fixes
+
+### 7.1 Form Validation และ Submit Button
+
+**ปัญหา:** ปุ่ม Submit ใน Corporate Profile creation form ยังคง disabled อยู่แม้จะกรอกฟอร์มครบแล้ว
+
+**สาเหตุ:**
+- Ant Design form ใช้ `disabled={loading || !submittable}` โดย `submittable` จะเป็น true ก็ต่อเมื่อฟอร์มมีการเปลี่ยนแปลงและ validate ผ่าน
+- การใช้ `Promise.all()` เพื่อ fill หลาย field พร้อมกันอาจทำให้ form change detection ไม่ทำงาน
+- การไม่ได้คลิก radio button (SFTP/Email) อย่างชัดเจนทำให้ form ไม่ detect การเปลี่ยนแปลง
+
+**วิธีแก้:**
+1. เปลี่ยนจาก parallel fill (`Promise.all`) เป็น sequential fill
+2. คลิก radio button (SFTP หรือ Email) อย่างชัดเจนเพื่อ trigger form validation
+3. รอให้ submit button เป็น enabled ด้วย `toBeEnabled({ timeout: 10000 })`
+
+```ts
+// ❌ ก่อนแก้ - parallel fill
+await Promise.all([
+  page.getByRole('textbox', { name: 'Corporate ID' }).fill(id),
+  page.getByRole('textbox', { name: 'Thai Name' }).fill(thai),
+]);
+
+// ✅ หลังแก้ - sequential fill + explicit radio click
+await page.getByRole('textbox', { name: 'Corporate ID' }).fill(id);
+await page.getByRole('textbox', { name: 'Thai Name' }).fill(thai);
+await page.locator('label').filter({ hasText: /sFTP/i }).click();
+await expect(submitButton).toBeEnabled({ timeout: 10000 });
+```
+
+### 7.2 Strict Mode Violations
+
+**ปัญหา:** Playwright ขึ้น error "strict mode violation: ... resolved to 2 elements"
+
+**กรณีที่พบ:**
+1. `getByText('Request Submitted!')` match ทั้ง `<div>` และ `<span>` ใน Ant Design modal
+2. `getByRole('button', { name: 'Approve' })` เมื่อมีหลาย row ที่มีปุ่ม Approve
+
+**วิธีแก้:**
+1. ใช้ `getByRole('dialog').filter({ hasText: '...' })` สำหรับ modal
+2. Scope locator ลงไปที่ row level: `row.getByRole('link', { name: /approve/i })`
+
+```ts
+// ❌ Strict mode violation
+await page.getByText('Request Submitted!').waitFor();
+
+// ✅ ใช้ role + filter
+const dialog = page.getByRole('dialog').filter({ hasText: 'Request Submitted!' });
+await dialog.waitFor({ state: 'visible' });
+```
+
+### 7.3 Modal vs Notification Toast
+
+**ปัญหา:** สับสนระหว่าง `modal.success` dialog และ `notification.success` toast
+
+**คำอธิบาย:**
+- **`modal.success`**: แสดง dialog ที่ต้องกด OK เพื่อปิด (ใช้ใน create/edit flow)
+- **`notification.success`**: แสดง toast ที่หายไปเองโดยอัตโนมัติ (ใช้ใน approve/reject flow)
+
+**วิธีแก้:**
+- Create/Edit: รอ URL navigation แล้วใช้ `closeSuccessDialog()`
+- Approve/Reject: ใช้ `waitForLoadState('networkidle')` แทนการปิด dialog

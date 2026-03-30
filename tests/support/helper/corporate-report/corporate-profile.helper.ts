@@ -20,7 +20,6 @@ async function fillCorporateProfileBaseFields(
     page: Page,
     profile: CorporateProfileData
 ) {
-    // Fill fields sequentially to ensure form change detection works properly
     await page.getByRole('textbox', { name: UI_TEXT.fields.corporateId }).fill(profile.corporateId);
     await page.getByRole('textbox', { name: UI_TEXT.fields.corporateNameThai }).fill(profile.thaiName);
     await page.getByRole('textbox', { name: UI_TEXT.fields.corporateNameEnglish }).fill(profile.englishName);
@@ -36,16 +35,12 @@ export async function createSftpCorporateProfile(
     await openCorporateProfileAddForm(page);
     await fillCorporateProfileBaseFields(page, profile);
 
-    // Explicitly select SFTP send type to trigger form validation
-    // The label in the UI is 'sFTP' (note the lowercase 's')
     await page.locator('label').filter({ hasText: /sFTP/i }).click();
 
-    // Submit the form
     const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
     await expect(submitButton).toBeEnabled({ timeout: 10000 });
     await submitButton.click();
 
-    // Wait for navigation back to the listing page and the success dialog
     await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
 }
@@ -70,12 +65,10 @@ export async function createEmailCorporateProfile(
 
     await page.getByRole('checkbox', { name: UI_TEXT.emailRound.round1 }).check();
 
-    // Submit the form
     const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
     await expect(submitButton).toBeEnabled({ timeout: 10000 });
     await submitButton.click();
 
-    // Wait for navigation and success dialog
     await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
 }
@@ -137,6 +130,5 @@ export async function deleteCorporateProfile(
 
     await page.getByRole('button', { name: 'Yes' }).click();
     await confirmVisibleDialog(page, PATTERNS.confirmDelete);
-    // The delete action shows a notification toast, not a modal, so we just wait for the page to settle
     await page.waitForLoadState('networkidle');
 }
