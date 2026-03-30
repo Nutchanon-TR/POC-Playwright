@@ -1,50 +1,109 @@
 # Corporate Report Playwright
 
-โปรเจกต์นี้ใช้ Playwright สำหรับทดสอบ End-to-End ของเมนู `Corporate Report` บนหน้าเว็บจริง โดยอ้างอิง flow หลักจากไฟล์ `tests/corporate-report.spec.ts`
+โปรเจกต์นี้ใช้ Playwright สำหรับทดสอบ End-to-End ของเมนู `Corporate Report` บนหน้าเว็บจริง โดยใช้สถาปัตยกรรมแบบ **modular** ที่แยกการทดสอบ Corporate Profile และ Incoming Profile เป็นโมดูลอิสระ
 
 ## ภาพรวมการทดสอบ
 
 เทสหลักครอบคลุม flow สำคัญของ `Corporate Profile` และ `Incoming Profile` ตั้งแต่สร้างข้อมูล ส่งอนุมัติ อนุมัติ/ปฏิเสธ แก้ไข ตรวจสอบผลลัพธ์ ไปจนถึงลบข้อมูลและอนุมัติคำขอลบ
 
+## สถาปัตยกรรมการทดสอบ
+
+### โครงสร้างแบบ Modular
+
+การทดสอบถูกออกแบบให้แยกเป็น **2 โมดูลอิสระ** เพื่อรองรับการทดสอบแบบขอบขนาน (Parallel Execution):
+
+| โมดูล | ไฟล์ | รายละเอียด |
+|-------|------|-----------|
+| **Corporate Profile** | `tests/corporate-profile.spec.ts` | ทดสอบการสร้าง, อนุมัติ, แก้ไข และลบ Corporate Profile (SFTP/Email) |
+| **Incoming Profile** | `tests/incoming-profile.spec.ts` | ทดสอบการสร้าง, อนุมัติ, แก้ไข และลบ Incoming Profile |
+
+**เหตุผลในการแยก:**
+- ทั้ง 2 โมดูลเป็น **Independent Data Entities** ไม่มี dependency ต่อกัน
+- ใช้ API endpoints ที่ต่างกัน (`/corporate-profiles` vs `/incoming-profiles`)
+- ใช้ Pending Request tabs ที่แยกกัน (Corporate vs Incoming)
+- สามารถรันแบบขนาน (parallel) ได้ โดยไม่กระทบกัน ทำให้ลดเวลาการทดสอบ
+
+### Helper Functions (Modular Architecture)
+
+Helper functions ถูกจัดระเบียบตามสถาปัตยกรรม 3 ชั้น:
+
+```
+tests/support/helper/
+├── common/                          ← Generic/Reusable Layer
+│   ├── core/                        ← System-level utilities
+│   │   ├── auth.helper.ts              (Login, Sign Out)
+│   │   └── data.helper.ts              (ID generation, random data)
+│   └── ui/                          ← UI interaction utilities
+│       ├── dialog.helper.ts            (Dialog handling)
+│       ├── form.helper.ts              (Form interactions)
+│       ├── navigation.helper.ts        (Page navigation)
+│       └── table.helper.ts             (Table operations)
+├── corporate-report/                ← Domain-specific Layer
+│   ├── corporate-profile.helper.ts     (Corporate Profile CRUD)
+│   ├── incoming-profile.helper.ts      (Incoming Profile CRUD)
+│   ├── pending-request.helper.ts       (Approval workflows)
+│   └── data.factory.ts                 (Test data generation)
+└── index.ts                         ← Barrel exports
+```
+
 ## Flow ที่ทดสอบ
 
+### Corporate Profile Flow
 1. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com`
 2. สร้าง `Corporate Profile` แบบ `SFTP`
 3. สร้าง `Corporate Profile` แบบ `EMAIL`
-4. สร้าง `Incoming Profile` สำหรับใช้อนุมัติ
-5. สร้าง `Incoming Profile` สำหรับใช้ปฏิเสธ
-6. Sign out จากผู้สร้างรายการ
-7. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
-8. Approve รายการ `Corporate Profile` แบบ `EMAIL`
-9. Reject รายการ `Corporate Profile` แบบ `SFTP`
-10. Approve `Incoming Profile` รายการแรก
-11. Reject `Incoming Profile` รายการที่สอง
-12. Sign out จาก approver
-13. Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
-14. แก้ไข `Corporate Profile` ที่ถูก approve
-15. แก้ไข `Incoming Profile` ที่ถูก approve
-16. Sign out จากผู้สร้างรายการ
-17. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
-18. Approve คำขอแก้ไข `Corporate Profile`
-19. Approve คำขอแก้ไข `Incoming Profile`
-20. Sign out จาก approver
-21. Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
-22. ตรวจสอบว่าข้อมูล `Corporate Profile` ถูกแก้ไขสำเร็จ
-23. ตรวจสอบว่าข้อมูล `Incoming Profile` ถูกแก้ไขสำเร็จ
-24. ลบ `Corporate Profile` ที่แก้ไขแล้ว
-25. ลบ `Incoming Profile` ที่แก้ไขแล้ว
-26. Sign out จากผู้สร้างรายการ
-27. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
-28. Approve คำขอลบ `Corporate Profile`
-29. Approve คำขอลบ `Incoming Profile`
-30. Sign out เพื่อจบการทดสอบ
+4. Sign out จากผู้สร้างรายการ
+5. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
+6. Approve รายการ `Corporate Profile` แบบ `EMAIL`
+7. Reject รายการ `Corporate Profile` แบบ `SFTP`
+8. Sign out จาก approver
+9. Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
+10. แก้ไข `Corporate Profile` ที่ถูก approve
+11. Sign out จากผู้สร้างรายการ
+12. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
+13. Approve คำขอแก้ไข `Corporate Profile`
+14. Sign out จาก approver
+15. Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
+16. ตรวจสอบว่าข้อมูล `Corporate Profile` ถูกแก้ไขสำเร็จ
+17. ลบ `Corporate Profile` ที่แก้ไขแล้ว
+18. Sign out จากผู้สร้างรายการ
+19. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
+20. Approve คำขอลบ `Corporate Profile`
+21. Sign out เพื่อจบการทดสอบ
+
+### Incoming Profile Flow
+1. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com`
+2. สร้าง `Incoming Profile` สำหรับใช้อนุมัติ
+3. สร้าง `Incoming Profile` สำหรับใช้ปฏิเสธ
+4. Sign out จากผู้สร้างรายการ
+5. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
+6. Approve `Incoming Profile` รายการแรก
+7. Reject `Incoming Profile` รายการที่สอง
+8. Sign out จาก approver
+9. Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
+10. แก้ไข `Incoming Profile` ที่ถูก approve
+11. Sign out จากผู้สร้างรายการ
+12. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
+13. Approve คำขอแก้ไข `Incoming Profile`
+14. Sign out จาก approver
+15. Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
+16. ตรวจสอบว่าข้อมูล `Incoming Profile` ถูกแก้ไขสำเร็จ
+17. ลบ `Incoming Profile` ที่แก้ไขแล้ว
+18. Sign out จากผู้สร้างรายการ
+19. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
+20. Approve คำขอลบ `Incoming Profile`
+21. Sign out เพื่อจบการทดสอบ
 
 ## ไฟล์สำคัญ
 
-- `tests/corporate-report.spec.ts` เทสหลักของ Corporate Report
-- `tests/example.spec.ts` ตัวอย่าง Playwright test
-- `playwright.config.ts` config สำหรับรัน Playwright
-- `script.txt` สรุปขั้นตอนการทดสอบแบบ step-by-step
+### Test Specification Files
+- `tests/corporate-profile.spec.ts` - ทดสอบ Corporate Profile (อิสระ, รันแบบ parallel ได้)
+- `tests/incoming-profile.spec.ts` - ทดสอบ Incoming Profile (อิสระ, รันแบบ parallel ได้)
+
+### Configuration & Documentation
+- `playwright.config.ts` - Playwright configuration
+- `REPORT.md` - รายงานการ Refactor และ Architecture Decisions
+- `SPEC.md` - รายละเอียด Helper Function Specifications
 
 ## วิธีรัน Playwright
 
@@ -66,19 +125,25 @@ npm install
 npx playwright install
 ```
 
-รันทุกเทส
+รันทุกเทส (ทั้ง Corporate และ Incoming Profiles)
 
 ```powershell
 npm run test
 ```
 
-รันเฉพาะเทส Corporate Report
+รันเฉพาะโมดูล Corporate Profile
 
 ```powershell
-npm run test:corporate
+npm run test:corporate-profile
 ```
 
-รันเฉพาะบน Chromium
+รันเฉพาะโมดูล Incoming Profile
+
+```powershell
+npm run test:incoming-profile
+```
+
+รันเฉพาะบน Chromium (Corporate Profile)
 
 ```powershell
 npm run test:chromium
@@ -90,7 +155,11 @@ npm run test:chromium
 npm run report
 ```
 
+สร้าง test ใหม่ด้วย Codegen
+
+```powershell
 npx playwright codegen https://corpadmin-dev.se.scb.co.th/
+```
 
 ## หมายเหตุ
 
