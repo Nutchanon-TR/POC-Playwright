@@ -14,7 +14,11 @@ function todayAsDdMmYyyy() {
     return `${day}/${month}/${year}`;
 }
 
-async function openIncomingProfileAddForm(page: Page) {
+export function formatIncomingAccountPattern(accountNo: string) {
+    return new RegExp(accountNo.split('').join('-?'));
+}
+
+export async function openIncomingProfileAddForm(page: Page) {
     await openIncomingProfiles(page);
     const addNewButton = page.getByRole('button', { name: UI_TEXT.buttons.addNew });
     await expect(addNewButton).toBeVisible();
@@ -40,12 +44,34 @@ function waitForIncomingProfileResponse(page: Page) {
     );
 }
 
-async function selectFirstIncomingCorporateId(page: Page) {
+export async function selectFirstIncomingCorporateId(page: Page) {
     await page.getByRole('combobox', { name: UI_TEXT.fields.incomingCorporateId }).click();
 
     const visibleDropdownOptions = page.locator(SELECTORS.antSelectVisibleOptions);
     await expect(visibleDropdownOptions.first()).toBeVisible();
     await visibleDropdownOptions.first().click();
+}
+
+export async function fillIncomingProfileForm(
+    page: Page,
+    options: {
+        accountNo?: string;
+        remark?: string;
+        effectiveDate?: string;
+    }
+) {
+    if (options.accountNo !== undefined) {
+        await page.getByPlaceholder(UI_TEXT.placeholders.accountNo).fill(options.accountNo);
+    }
+
+    if (options.effectiveDate !== undefined) {
+        await page.getByPlaceholder(UI_TEXT.placeholders.selectDate).fill(options.effectiveDate);
+        await page.getByPlaceholder(UI_TEXT.placeholders.selectDate).press('Tab');
+    }
+
+    if (options.remark !== undefined) {
+        await page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark).fill(options.remark);
+    }
 }
 
 export async function createIncomingProfile(
@@ -55,10 +81,11 @@ export async function createIncomingProfile(
     await openIncomingProfileAddForm(page);
 
     await selectFirstIncomingCorporateId(page);
-    await page.getByPlaceholder(UI_TEXT.placeholders.accountNo).fill(profile.accountNo);
-    await page.getByPlaceholder(UI_TEXT.placeholders.selectDate).fill(todayAsDdMmYyyy());
-    await page.getByPlaceholder(UI_TEXT.placeholders.selectDate).press('Tab');
-    await page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark).fill(profile.remark);
+    await fillIncomingProfileForm(page, {
+        accountNo: profile.accountNo,
+        effectiveDate: todayAsDdMmYyyy(),
+        remark: profile.remark,
+    });
 
     const responsePromise = waitForIncomingProfileResponse(page);
     await submitIncomingProfile(page);

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 export async function closeSuccessDialog(page: Page) {
     const yesBtn = page.getByRole('button', { name: 'Yes' });
@@ -26,4 +26,8 @@ export async function confirmVisibleDialog(
     if (await confirmButton.isVisible()) {
         await confirmButton.click();
     }
+}
+
+export async function expectNotificationMessage(page: Page, message: string) {
+    await expect(page.getByText(message).last()).toBeVisible({ timeout: 15000 });
 }

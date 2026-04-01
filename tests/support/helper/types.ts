@@ -23,11 +23,13 @@ export type TestRunData = {
     timestamp: number;
     idSuffix: string;
     corporateProfiles: {
-        sftp: CorporateProfileData;
-        email: CorporateProfileData & {
+        sftpApproved: CorporateProfileData;
+        sftpRejected: CorporateProfileData;
+        emailApproved: CorporateProfileData & {
             updatedEnglishName: string;
             updatedRemark: string;
         };
+        emailRejected: CorporateProfileData;
     };
     incomingProfiles: {
         approved: IncomingProfileData;

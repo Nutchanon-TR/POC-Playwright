@@ -9,23 +9,39 @@ export function buildTestRunData(timestamp = Date.now()): TestRunData {
         timestamp,
         idSuffix,
         corporateProfiles: {
-            sftp: {
-                corporateId: `SFTP-${idSuffix}`,
+            sftpApproved: {
+                corporateId: `SFTP-A-${idSuffix}`,
                 thaiName: `${TEST_CONTENT.names.sftpThai}-${idSuffix}`,
                 englishName: `${TEST_CONTENT.names.sftpEnglish}-${idSuffix}`,
-                remark: TEST_CONTENT.remarks.sftpCreate,
+                remark: TEST_CONTENT.remarks.sftpApproveCreate,
                 sendType: 'SFTP',
             },
-            email: {
-                corporateId: `EMAIL-${idSuffix}`,
+            sftpRejected: {
+                corporateId: `SFTP-R-${idSuffix}`,
+                thaiName: `${TEST_CONTENT.names.sftpThai}-R-${idSuffix}`,
+                englishName: `${TEST_CONTENT.names.sftpEnglish} Reject`,
+                remark: TEST_CONTENT.remarks.sftpRejectCreate,
+                sendType: 'SFTP',
+            },
+            emailApproved: {
+                corporateId: `EMAIL-A-${idSuffix}`,
                 thaiName: `${TEST_CONTENT.names.emailThai}-${idSuffix}`,
                 englishName: `${TEST_CONTENT.names.emailEnglish}-${idSuffix}`,
-                remark: TEST_CONTENT.remarks.emailCreate,
+                remark: TEST_CONTENT.remarks.emailApproveCreate,
                 sendType: 'Email',
                 taxId: lastDigits(timestamp + 2, 13),
-                emails: [...TEST_CONTENT.emails],
+                emails: [...TEST_CONTENT.emails.slice(0, 2)],
                 updatedEnglishName: TEST_CONTENT.names.updatedEmailEnglish,
                 updatedRemark: TEST_CONTENT.remarks.emailUpdated,
+            },
+            emailRejected: {
+                corporateId: `EMAIL-R-${idSuffix}`,
+                thaiName: `${TEST_CONTENT.names.emailThai}-R-${idSuffix}`,
+                englishName: `${TEST_CONTENT.names.emailEnglish} Reject`,
+                remark: TEST_CONTENT.remarks.emailRejectCreate,
+                sendType: 'Email',
+                taxId: lastDigits(timestamp + 3, 13),
+                emails: [...TEST_CONTENT.emails.slice(0, 2)],
             },
         },
         incomingProfiles: {

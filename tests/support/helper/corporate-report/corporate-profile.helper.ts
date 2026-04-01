@@ -6,7 +6,9 @@ import { openCorporateProfiles } from '../common/ui/navigation.helper';
 import { clickRowAction, findTableRowByTexts } from '../common/ui/table.helper';
 import type { CorporateProfileData } from '../types';
 
-async function openCorporateProfileAddForm(page: Page) {
+const PORTAL_ORIGIN = URLS.login.replace(/\/login$/, '');
+
+export async function openCorporateProfileAddForm(page: Page) {
     await openCorporateProfiles(page);
     const addNewButton = page.getByRole('button', { name: UI_TEXT.buttons.addNew });
     await expect(addNewButton).toBeVisible();
@@ -16,9 +18,9 @@ async function openCorporateProfileAddForm(page: Page) {
     ).toBeVisible();
 }
 
-async function fillCorporateProfileBaseFields(
+export async function fillCorporateProfileBaseFields(
     page: Page,
-    profile: CorporateProfileData
+    profile: Pick<CorporateProfileData, 'corporateId' | 'thaiName' | 'englishName' | 'remark'>
 ) {
     await page.getByRole('textbox', { name: UI_TEXT.fields.corporateId }).fill(profile.corporateId);
     await page.getByRole('textbox', { name: UI_TEXT.fields.corporateNameThai }).fill(profile.thaiName);
@@ -26,7 +28,73 @@ async function fillCorporateProfileBaseFields(
     await page.getByRole('textbox', { name: UI_TEXT.fields.remark }).fill(profile.remark);
 }
 
+export async function selectCorporateSendType(
+    page: Page,
+    sendType: CorporateProfileData['sendType']
+) {
+    if (sendType === 'Email') {
+        await page.locator('label').filter({ hasText: UI_TEXT.sendType.email }).click();
+        return;
+    }
 
+    await page.locator('label').filter({ hasText: /sFTP/i }).click();
+}
+
+export async function addCorporateEmails(page: Page, emails: string[]) {
+    const emailInput = page.locator(SELECTORS.emailListInput);
+
+    for (const email of emails) {
+        await emailInput.fill(email);
+        await emailInput.press('Enter');
+        await expect(
+            page.locator('.ant-select-selection-item').filter({ hasText: email }).first()
+        ).toBeVisible();
+    }
+}
+
+export async function removeCorporateEmail(page: Page, email: string) {
+    const tag = page.locator('.ant-select-selection-item').filter({ hasText: email }).first();
+    await expect(tag).toBeVisible();
+
+    const removeButton = tag.locator('.ant-select-selection-item-remove, .anticon-close').first();
+    if (await removeButton.count()) {
+        await removeButton.click();
+    } else {
+        const emailInput = page.locator(SELECTORS.emailListInput);
+        await emailInput.click();
+        await emailInput.press('Backspace');
+    }
+
+    await expect(page.locator('.ant-select-selection-item').filter({ hasText: email })).toHaveCount(0);
+}
+
+export async function fillCorporateEmailFields(
+    page: Page,
+    options: {
+        taxId?: string;
+        emails?: string[];
+        checkRound1?: boolean;
+    }
+) {
+    if (options.taxId !== undefined) {
+        await page.getByPlaceholder(UI_TEXT.placeholders.taxId).fill(options.taxId);
+    }
+
+    if (options.emails?.length) {
+        await addCorporateEmails(page, options.emails);
+    }
+
+    if (options.checkRound1) {
+        await page.getByRole('checkbox', { name: UI_TEXT.emailRound.round1 }).check();
+    }
+}
+
+export async function openCorporateProfilesWithSearch(page: Page, corporateId: string) {
+    await page.goto(
+        `${PORTAL_ORIGIN}/corporate-report/corporate-profiles?corporateId=${encodeURIComponent(corporateId)}&page=1&pageSize=10`
+    );
+    await page.waitForSelector('table', { state: 'visible', timeout: 15000 });
+}
 
 export async function createSftpCorporateProfile(
     page: Page,
@@ -35,7 +103,7 @@ export async function createSftpCorporateProfile(
     await openCorporateProfileAddForm(page);
     await fillCorporateProfileBaseFields(page, profile);
 
-    await page.locator('label').filter({ hasText: /sFTP/i }).click();
+    await selectCorporateSendType(page, profile.sendType);
 
     const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
     await expect(submitButton).toBeEnabled({ timeout: 10000 });
@@ -52,18 +120,12 @@ export async function createEmailCorporateProfile(
     await openCorporateProfileAddForm(page);
     await fillCorporateProfileBaseFields(page, profile);
 
-    await page.locator('label').filter({ hasText: UI_TEXT.sendType.email }).click();
-
-    if (profile.taxId) {
-        await page.getByPlaceholder(UI_TEXT.placeholders.taxId).fill(profile.taxId);
-    }
-
-    for (const email of profile.emails ?? []) {
-        await page.locator(SELECTORS.emailListInput).fill(email);
-        await page.locator(SELECTORS.emailListInput).press('Enter');
-    }
-
-    await page.getByRole('checkbox', { name: UI_TEXT.emailRound.round1 }).check();
+    await selectCorporateSendType(page, profile.sendType);
+    await fillCorporateEmailFields(page, {
+        taxId: profile.taxId,
+        emails: profile.emails,
+        checkRound1: true,
+    });
 
     const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
     await expect(submitButton).toBeEnabled({ timeout: 10000 });

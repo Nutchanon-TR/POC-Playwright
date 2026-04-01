@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { TEST_CONTENT } from '../../../constant';
 
 type RowAction = 'edit' | 'delete' | 'approve' | 'reject';
 
@@ -75,4 +76,11 @@ export async function clickRowAction(row: Locator, action: RowAction) {
     }
 
     throw new Error(`Could not find row action "${action}"`);
+}
+
+export async function expectEmptyState(
+    page: Page,
+    text: string = TEST_CONTENT.validationMessages.emptyState
+) {
+    await expect(page.getByText(text).first()).toBeVisible();
 }

@@ -64,6 +64,26 @@ type PendingRequestOptions = {
 
 ใช้เป็น output ของ `buildTestRunData()` เพื่อสร้าง test data แบบ dynamic สำหรับทั้ง flow
 
+```ts
+type TestRunData = {
+  timestamp: number;
+  idSuffix: string;
+  corporateProfiles: {
+    sftpApproved: CorporateProfileData;
+    sftpRejected: CorporateProfileData;
+    emailApproved: CorporateProfileData & {
+      updatedEnglishName: string;
+      updatedRemark: string;
+    };
+    emailRejected: CorporateProfileData;
+  };
+  incomingProfiles: {
+    approved: IncomingProfileData;
+    rejected: IncomingProfileData;
+  };
+};
+```
+
 ## 3. Public Helper Functions
 
 ส่วนนี้คือ function ที่ถูก export และควรเรียกใช้จาก test ได้โดยตรง
@@ -122,12 +142,13 @@ await signOut(page);
 - หมายเหตุ:
   - ถ้าไม่ส่งค่า จะใช้ `Date.now()`
   - สร้างทั้งข้อมูล `Corporate Profile` และ `Incoming Profile`
+  - ฝั่ง `Corporate Profile` แยก data เป็น `sftpApproved`, `sftpRejected`, `emailApproved`, `emailRejected`
   - มีข้อมูลสำหรับทั้ง create และ update อยู่ใน object เดียว
 
 ```ts
 const runData = buildTestRunData();
 
-await createEmailCorporateProfile(page, runData.corporateProfiles.email);
+await createEmailCorporateProfile(page, runData.corporateProfiles.emailApproved);
 await createIncomingProfile(page, runData.incomingProfiles.approved);
 ```
 
@@ -293,8 +314,8 @@ await expect(rows.first()).toBeVisible();
 
 ```ts
 const row = await findTableRowByTexts(page, [
-  runData.corporateProfiles.email.corporateId,
-  runData.corporateProfiles.email.updatedRemark,
+  runData.corporateProfiles.emailApproved.corporateId,
+  runData.corporateProfiles.emailApproved.updatedRemark,
 ]);
 ```
 
@@ -330,7 +351,7 @@ await clickRowAction(row, 'edit');
   - ใช้เฉพาะ field พื้นฐานของ corporate profile
 
 ```ts
-await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
+await createSftpCorporateProfile(page, runData.corporateProfiles.sftpApproved);
 ```
 
 #### `createEmailCorporateProfile(page, profile)`
@@ -348,7 +369,7 @@ await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
   - helper จะ check `Round 1 (09.00)` ให้
 
 ```ts
-await createEmailCorporateProfile(page, runData.corporateProfiles.email);
+await createEmailCorporateProfile(page, runData.corporateProfiles.emailApproved);
 ```
 
 #### `searchCorporateProfile(page, corporateId)`
@@ -363,7 +384,7 @@ await createEmailCorporateProfile(page, runData.corporateProfiles.email);
   - ก่อน verify row
 
 ```ts
-await searchCorporateProfile(page, runData.corporateProfiles.email.corporateId);
+await searchCorporateProfile(page, runData.corporateProfiles.emailApproved.corporateId);
 ```
 
 #### `editCorporateProfile(page, options)`
@@ -382,14 +403,14 @@ await searchCorporateProfile(page, runData.corporateProfiles.email.corporateId);
 
 ```ts
 await editCorporateProfile(page, {
-  corporateId: runData.corporateProfiles.email.corporateId,
+  corporateId: runData.corporateProfiles.emailApproved.corporateId,
   rowTexts: [
-    runData.corporateProfiles.email.corporateId,
-    runData.corporateProfiles.email.englishName,
-    runData.corporateProfiles.email.remark,
+    runData.corporateProfiles.emailApproved.corporateId,
+    runData.corporateProfiles.emailApproved.englishName,
+    runData.corporateProfiles.emailApproved.remark,
   ],
-  englishName: runData.corporateProfiles.email.updatedEnglishName,
-  remark: runData.corporateProfiles.email.updatedRemark,
+  englishName: runData.corporateProfiles.emailApproved.updatedEnglishName,
+  remark: runData.corporateProfiles.emailApproved.updatedRemark,
 });
 ```
 
@@ -408,10 +429,10 @@ await editCorporateProfile(page, {
 
 ```ts
 await deleteCorporateProfile(page, {
-  corporateId: runData.corporateProfiles.email.corporateId,
+  corporateId: runData.corporateProfiles.emailApproved.corporateId,
   rowTexts: [
-    runData.corporateProfiles.email.corporateId,
-    runData.corporateProfiles.email.updatedRemark,
+    runData.corporateProfiles.emailApproved.corporateId,
+    runData.corporateProfiles.emailApproved.updatedRemark,
   ],
 });
 ```
@@ -513,14 +534,14 @@ await deleteIncomingProfile(page, {
   - ถ้า `action` เป็น `reject` ควรส่ง `remark`
 
 ```ts
-await actOnPendingRequest(page, {
-  tab: 'Corporate',
-  texts: [
-    runData.corporateProfiles.email.corporateId,
-    runData.corporateProfiles.email.remark,
-  ],
-  action: 'approve',
-});
+  await actOnPendingRequest(page, {
+    tab: 'Corporate',
+    texts: [
+      runData.corporateProfiles.emailApproved.corporateId,
+      runData.corporateProfiles.emailApproved.remark,
+    ],
+    action: 'approve',
+  });
 
 await actOnPendingRequest(page, {
   tab: 'Incoming',
@@ -591,8 +612,10 @@ test('Corporate Report flow', async ({ page }) => {
 
   await test.step('Part 1: Creator creates profiles', async () => {
     await loginWithMicrosoft(page);
-    await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
-    await createEmailCorporateProfile(page, runData.corporateProfiles.email);
+    await createSftpCorporateProfile(page, runData.corporateProfiles.sftpApproved);
+    await createSftpCorporateProfile(page, runData.corporateProfiles.sftpRejected);
+    await createEmailCorporateProfile(page, runData.corporateProfiles.emailApproved);
+    await createEmailCorporateProfile(page, runData.corporateProfiles.emailRejected);
     await createIncomingProfile(page, runData.incomingProfiles.approved);
     await signOut(page);
   });
@@ -606,8 +629,8 @@ test('Corporate Report flow', async ({ page }) => {
     await actOnPendingRequest(page, {
       tab: 'Corporate',
       texts: [
-        runData.corporateProfiles.email.corporateId,
-        runData.corporateProfiles.email.remark,
+        runData.corporateProfiles.emailApproved.corporateId,
+        runData.corporateProfiles.emailApproved.remark,
       ],
       action: 'approve',
     });
