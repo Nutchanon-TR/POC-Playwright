@@ -48,78 +48,84 @@ tests/support/helper/
 
 ## Flow ที่ทดสอบ
 
-เพิ่ม negative test case สำหรับ validate data
--. กรอกข้อมูลผิด format
--. กรอกข้อมูลไม่ครบ
--. กรอกข้อมูลซ้ำ
--. ดัก timeout ให้ครบ กรณีโหลดช้า
+เสริม Negative Test Cases เพื่อยืนยันระบบ Validate ข้อมูลเต็มรูปแบบ:
+1. การกรอกข้อมูลผิด Format
+2. การกรอกข้อมูลไม่ครบถ้วน
+3. การส่งข้อมูลซ้ำซ้อน
+4. การดักจับ Timeout เมื่อหน้าจอโหลดช้า
+
+### Common UI & Security Flow (ทดสอบรวม)
+1. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com` (Maker)
+2. ตรวจสอบ UI: ในหน้ารายการ Pending ต้อง **ไม่แสดง** ปุ่ม Approve/Reject ให้ Maker เห็น
+3. ค้นหาข้อมูลที่ไม่มีในระบบ เพื่อตรวจสอบหน้าจอ **No Data (Empty State)**
 
 ### Corporate Profile Flow
-1. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com`
-- สร้าง negative test case `Corporate Profile` แบบ `SFTP` ที่กรอกข้อมูลไม่ครบ
-- สร้าง negative test case `Corporate Profile` แบบ `SFTP` ที่กรอกข้อมูลผิด format
-2. เปลี่ยนข้อมูลที่กรอกผิด format เป็นข้อมูลที่ถูกต้อง `Corporate Profile` แบบ `SFTP`
-- สร้าง `Corporate Profile` แบบ `SFTP` สำหรับ reject
-- สร้าง negative test case `Corporate Profile` แบบ `EMAIL` ที่กรอกข้อมูลไม่ครบ
-- สร้าง negative test case `Corporate Profile` แบบ `EMAIL` ที่กรอกข้อมูลผิด format
-3. เปลี่ยนข้อมูลที่กรอกผิด format เป็นข้อมูลที่ถูกต้อง `Corporate Profile` แบบ `EMAIL`
-- สร้าง `Corporate Profile` แบบ `EMAIL` สำหรับ reject
-- สร้าง negative test case `Corporate Profile` แบบ `SFTP` ที่มีอยู่แล้ว แล้ว noti ขึ้นว่า 'There is a pending request for this profile.'
-- สร้าง negative test case `Corporate Profile` แบบ `EMAIL`  ที่มีอยู่แล้ว แล้ว noti ขึ้นว่า 'There is a pending request for this profile.'
-4. Sign out จากผู้สร้างรายการ
-5. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
-6. Approve รายการ `Corporate Profile` แบบ `EMAIL`
-6. Reject รายการ `Corporate Profile` แบบ `EMAIL`
-7. Approve รายการ `Corporate Profile` แบบ `SFTP`
-7. Reject รายการ `Corporate Profile` แบบ `SFTP`
-8. Sign out จาก approver
-9. Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
-- แก้ไขให้เป็น negative test case `Corporate Profile` ที่ถูก approve นั้นกรอกข้อมูลไม่ครบ
-- แก้ไขให้เป็น negative test case `Corporate Profile` ที่ถูก approve นั้นกรอกข้อมูลผิด format
-10. แก้ไข `Corporate Profile` ที่ถูก approve
-11. Sign out จากผู้สร้างรายการ
-12. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
-13. Approve คำขอแก้ไข `Corporate Profile`
-14. Sign out จาก approver
-15. Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
-16. ตรวจสอบว่าข้อมูล `Corporate Profile` ถูกแก้ไขสำเร็จ
-17. ลบ `Corporate Profile` ที่แก้ไขแล้ว
-18. Sign out จากผู้สร้างรายการ
-19. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
-20. Approve คำขอลบ `Corporate Profile`
-21. Sign out เพื่อจบการทดสอบ
-- Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
-- ตรวจสอบว่าข้อมูลที่ลบไปหายไปจริงๆ
+1. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com` (Maker)
+2. สร้าง `Corporate Profile (SFTP)` โดยกรอกข้อมูลไม่ครบ (Negative)
+3. สร้าง `Corporate Profile (SFTP)` โดยกรอกข้อมูลผิด Format (Negative)
+4. แก้ไขข้อมูลที่ผิด Format เป็นค่าที่ถูกต้องแล้วบันทึก
+5. สร้าง `Corporate Profile (SFTP)` สำหรับใช้ทดสอบการ Reject
+6. ทดสอบเว้นว่าง **Tax ID** กับ **Email** ทีละฟิลด์ จะต้องทำให้ปุ่ม Submit ถูก Disabled ไว้ (Negative)
+7. สร้าง `Corporate Profile (EMAIL)` โดยกรอกข้อมูลผิด Format (Negative)
+8. ทดสอบพิมพ์ 3 อีเมล แล้วลบลบออก 1 อีเมลเพื่อเช็คการทำงานของฟิลด์
+9. แก้ไขข้อมูลที่ผิด Format เป็นค่าที่ถูกต้องแล้วบันทึก
+10. สร้าง `Corporate Profile (EMAIL)` สำหรับใช้ทดสอบการ Reject
+11. สร้างรายการ `SFTP` ซ้ำ จะต้องขึ้นแจ้งเตือน 'There is a pending request for this profile.' (Negative)
+12. สร้างรายการ `EMAIL` ซ้ำ จะต้องขึ้นแจ้งเตือน 'There is a pending request for this profile.' (Negative)
+13. Sign out
+14. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com` (Approver)
+15. Approve `Corporate Profile (EMAIL)`
+16. Reject `Corporate Profile (EMAIL)` 
+17. Approve `Corporate Profile (SFTP)`
+18. Reject `Corporate Profile (SFTP)` 
+19. Sign out
+20. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com` (Maker)
+21. นำรายการที่ถูกระบุว่าผ่านอนุมัติ มาแก้ไขแบบกรอกข้อมูลไม่ครบ (Negative)
+22. นำรายการที่ถูกระบุว่าผ่านอนุมัติ มาแก้ไขแบบกรอกข้อมูลผิด Format (Negative)
+23. แก้ไข `Corporate Profile` ด้วยข้อมูลที่สมบูรณ์
+24. Sign out
+25. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com` (Approver)
+26. Approve คำขอตั้งค่าอัปเดต (Update Request)
+27. Sign out
+28. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com` (Maker)
+29. ตรวจสอบผลลัพธ์ข้อมูลว่าอัปเดตเรียบร้อย
+30. สร้างคำขอลบรายการ
+31. Sign out
+32. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com` (Approver)
+33. Approve คำขอลบ
+34. Sign out เพื่อสิ้นสุด
+35. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com` (Maker)
+36. ตรวจสอบว่าระบบนำรายการออกไปแล้วอย่างสมบูรณ์
 
 ### Incoming Profile Flow
-1. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com`
-- สร้าง negative test case `Incoming Profile` ที่กรอกข้อมูลไม่ครบ
-- สร้าง negative test case `Incoming Profile` ที่กรอกข้อมูลผิด format
-2. สร้าง `Incoming Profile` สำหรับใช้อนุมัติ
-- สร้าง negative test case `Incoming Profile` ที่กรอกข้อมูลซ้ำ
-3. สร้าง `Incoming Profile` สำหรับใช้ปฏิเสธ
-4. Sign out จากผู้สร้างรายการ
-5. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
-6. Approve `Incoming Profile` รายการแรก
-7. Reject `Incoming Profile` รายการที่สอง
-8. Sign out จาก approver
-9. Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
-- แก้ไขให้เป็น negative test case `Incoming Profile` ที่ถูก approve นั้นกรอกข้อมูลไม่ครบ
-- แก้ไขให้เป็น negative test case `Incoming Profile` ที่ถูก approve นั้นกรอกข้อมูลผิด format
-10. แก้ไข `Incoming Profile` ที่ถูก approve
-11. Sign out จากผู้สร้างรายการ
-12. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
-13. Approve คำขอแก้ไข `Incoming Profile`
-14. Sign out จาก approver
-15. Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
-16. ตรวจสอบว่าข้อมูล `Incoming Profile` ถูกแก้ไขสำเร็จ
-17. ลบ `Incoming Profile` ที่แก้ไขแล้ว
-18. Sign out จากผู้สร้างรายการ
-19. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com`
-20. Approve คำขอลบ `Incoming Profile`
-21. Sign out เพื่อจบการทดสอบ
-- Login กลับด้วย `corporatereport02@scbcorp.onmicrosoft.com`
-- ตรวจสอบว่าข้อมูลที่ลบไปหายไปจริงๆ
+1. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com` (Maker)
+2. สร้าง `Incoming Profile` แบบกรอกข้อมูลไม่ครบถ้วน (Negative)
+3. สร้าง `Incoming Profile` แบบกรอกข้อมูลผิด Format (Negative)
+4. สร้าง `Incoming Profile` ให้สมบูรณ์แบบเพื่อไปรอ Approve
+5. สร้าง `Incoming Profile` ด้วยข้อมูลซ้ำ (Negative)
+6. สร้าง `Incoming Profile` ให้สมบูรณ์แบบเพื่อไปรอถูก Reject
+7. Sign out
+8. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com` (Approver)
+9. Approve `Incoming Profile`
+10. Reject `Incoming Profile`
+11. Sign out
+12. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com` (Maker)
+13. นำรายการก่อนหน้าที่ผ่านอนุมัติ มาแก้ไขแบบข้อมูลไม่ครบ (Negative)
+14. นำรายการก่อนหน้าที่ผ่านอนุมัติ มาแก้ไขแบบข้อมูลผิด Format (Negative)
+15. นำรายการมาแก้ไขได้อย่างถูกต้อง พร้อมทั้งทดสอบสลับ Flag Active/Inactive
+16. Sign out
+17. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com` (Approver)
+18. Approve คำขอแก้อัปเดต
+19. Sign out
+20. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com` (Maker)
+21. ตรวจสอบดูผลแก้ไขบนหน้าจอมั่นใจว่าถูกต้อง
+22. ส่งคำขอลบรายการ (Delete)
+23. Sign out
+24. Login ด้วย `corporatereport04@scbcorp.onmicrosoft.com` (Approver)
+25. Approve การส่งขอลบ
+26. Sign out
+27. Login ด้วย `corporatereport02@scbcorp.onmicrosoft.com` (Maker)
+28. เข้าไปตรวจสอบว่ารายการลบออกถูกต้องเรียบร้อย
 
 ## ไฟล์สำคัญ
 
