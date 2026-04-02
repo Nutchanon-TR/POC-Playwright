@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { PATTERNS, SELECTORS, UI_TEXT, URLS } from '../../constant';
+import { submitWithRetryOn429 } from '../common/core/http-retry.helper';
 import { closeSuccessDialog, confirmVisibleDialog } from '../common/ui/dialog.helper';
 import { selectAutocompleteOption } from '../common/ui/form.helper';
 import { openCorporateProfiles } from '../common/ui/navigation.helper';
@@ -96,69 +97,6 @@ export async function openCorporateProfilesWithSearch(page: Page, corporateId: s
     await page.waitForSelector('table', { state: 'visible', timeout: 15000 });
 }
 
-/**
- * Submit form with retry on 429 (Rate Limiting) error
- * @param page Playwright Page
- * @param submitAction Function that triggers form submission
- * @param maxRetries Maximum number of retries (default: 3)
- * @param retryDelay Delay in ms before retry (default: 5000)
- */
-async function submitFormWithRetry(
-    page: Page,
-    submitAction: () => Promise<void>,
-    maxRetries: number = 3,
-    retryDelay: number = 5000
-) {
-    let attempt = 0;
-    let last429Error: any = null;
-
-    while (attempt < maxRetries) {
-        attempt++;
-        let got429 = false;
-
-        // Listen for 429 responses
-        const responseHandler = (response: any) => {
-            if (response.status() === 429 &&
-                (response.url().includes('/corporate-profiles') || response.url().includes('/incoming-profiles'))) {
-                got429 = true;
-                last429Error = { status: 429, url: response.url() };
-            }
-        };
-
-        page.on('response', responseHandler);
-
-        try {
-            await submitAction();
-            await page.waitForTimeout(500); // Wait for potential 429 response
-
-            // Remove listener
-            page.off('response', responseHandler);
-
-            if (got429) {
-                console.log(`[Attempt ${attempt}/${maxRetries}] Got 429 error, waiting ${retryDelay}ms before retry...`);
-                await page.waitForTimeout(retryDelay);
-                continue; // Retry
-            }
-
-            // Success - no 429
-            return;
-        } catch (error) {
-            page.off('response', responseHandler);
-
-            if (got429 && attempt < maxRetries) {
-                console.log(`[Attempt ${attempt}/${maxRetries}] Got 429 error, waiting ${retryDelay}ms before retry...`);
-                await page.waitForTimeout(retryDelay);
-                continue;
-            }
-
-            throw error; // Re-throw if not 429 or max retries reached
-        }
-    }
-
-    // If we got here, all retries failed with 429
-    throw new Error(`Failed after ${maxRetries} attempts due to rate limiting (429): ${last429Error?.url}`);
-}
-
 export async function createSftpCorporateProfile(
     page: Page,
     profile: CorporateProfileData
@@ -174,7 +112,7 @@ export async function createSftpCorporateProfile(
     await fillCorporateProfileBaseFields(page, profile);
 
     // Submit with retry on 429
-    await submitFormWithRetry(page, async () => {
+    await submitWithRetryOn429(page, async () => {
         // WORKAROUND: Frontend bug - submit button may stay disabled even with valid data
         const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
         const isEnabled = await submitButton.isEnabled().catch(() => false);
@@ -191,6 +129,8 @@ export async function createSftpCorporateProfile(
                 }
             });
         }
+    }, {
+        logPrefix: 'Create SFTP Corporate Profile',
     });
 
     await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });
@@ -211,10 +151,12 @@ export async function createEmailCorporateProfile(
     });
 
     // Submit with retry on 429
-    await submitFormWithRetry(page, async () => {
+    await submitWithRetryOn429(page, async () => {
         const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
         await expect(submitButton).toBeEnabled({ timeout: 10000 });
         await submitButton.click();
+    }, {
+        logPrefix: 'Create Email Corporate Profile',
     });
 
     await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });

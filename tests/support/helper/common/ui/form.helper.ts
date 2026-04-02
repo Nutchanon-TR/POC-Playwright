@@ -15,6 +15,8 @@ export async function selectAutocompleteOption(
     const hasDropdown = await visibleDropdownOptions.first().isVisible({ timeout: 2000 }).catch(() => false);
 
     if (hasDropdown) {
+        // Ant Design occasionally leaves a second visible dropdown layer after the first role-based click,
+        // so we click the visible option again to make the selection deterministic.
         const option = visibleDropdownOptions.filter({ hasText: optionText });
         await option.first().click();
     }

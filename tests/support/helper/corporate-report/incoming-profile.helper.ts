@@ -1,11 +1,12 @@
 import { expect, type Page } from '@playwright/test';
 import { API_PATHS, PATTERNS, SELECTORS, UI_TEXT, URLS } from '../../constant';
+import { submitWithRetryOn429 } from '../common/core/http-retry.helper';
 import { closeSuccessDialog, confirmVisibleDialog } from '../common/ui/dialog.helper';
 import { openIncomingProfiles } from '../common/ui/navigation.helper';
 import { clickRowAction, findTableRowByTexts } from '../common/ui/table.helper';
 import type { IncomingProfileData } from '../types';
 
-function todayAsDdMmYyyy() {
+export function todayAsDdMmYyyy() {
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -42,69 +43,6 @@ function waitForIncomingProfileResponse(page: Page) {
             res.request().method() !== 'GET' &&
             res.status() === 200
     );
-}
-
-/**
- * Submit incoming profile form with retry on 429 (Rate Limiting) error
- * @param page Playwright Page
- * @param submitAction Function that triggers form submission
- * @param maxRetries Maximum number of retries (default: 3)
- * @param retryDelay Delay in ms before retry (default: 5000)
- */
-async function submitIncomingFormWithRetry(
-    page: Page,
-    submitAction: () => Promise<void>,
-    maxRetries: number = 3,
-    retryDelay: number = 5000
-) {
-    let attempt = 0;
-    let last429Error: any = null;
-
-    while (attempt < maxRetries) {
-        attempt++;
-        let got429 = false;
-
-        // Listen for 429 responses
-        const responseHandler = (response: any) => {
-            if (response.status() === 429 &&
-                (response.url().includes('/corporate-profiles') || response.url().includes('/incoming-profiles'))) {
-                got429 = true;
-                last429Error = { status: 429, url: response.url() };
-            }
-        };
-
-        page.on('response', responseHandler);
-
-        try {
-            await submitAction();
-            await page.waitForTimeout(500); // Wait for potential 429 response
-
-            // Remove listener
-            page.off('response', responseHandler);
-
-            if (got429) {
-                console.log(`[Incoming Profile - Attempt ${attempt}/${maxRetries}] Got 429 error, waiting ${retryDelay}ms before retry...`);
-                await page.waitForTimeout(retryDelay);
-                continue; // Retry
-            }
-
-            // Success - no 429
-            return;
-        } catch (error) {
-            page.off('response', responseHandler);
-
-            if (got429 && attempt < maxRetries) {
-                console.log(`[Incoming Profile - Attempt ${attempt}/${maxRetries}] Got 429 error, waiting ${retryDelay}ms before retry...`);
-                await page.waitForTimeout(retryDelay);
-                continue;
-            }
-
-            throw error; // Re-throw if not 429 or max retries reached
-        }
-    }
-
-    // If we got here, all retries failed with 429
-    throw new Error(`Failed after ${maxRetries} attempts due to rate limiting (429): ${last429Error?.url}`);
 }
 
 export async function selectFirstIncomingCorporateId(page: Page) {
@@ -151,10 +89,19 @@ export async function createIncomingProfile(
     });
 
     // Submit with retry on 429
-    await submitIncomingFormWithRetry(page, async () => {
-        const responsePromise = waitForIncomingProfileResponse(page);
+    await submitWithRetryOn429(page, async () => {
+        const responsePromise = page.waitForResponse(
+            (res) =>
+                res.url().includes(API_PATHS.corporateReport) &&
+                res.url().includes(API_PATHS.incomingProfiles) &&
+                res.request().method() !== 'GET' &&
+                (res.status() === 200 || res.status() === 429)
+        );
         await submitIncomingProfile(page);
         await responsePromise;
+    }, {
+        logPrefix: 'Create Incoming Profile',
+        responseUrlIncludes: [API_PATHS.incomingProfiles],
     });
 
     await expect(page).toHaveURL(URLS.incomingProfilesPattern, { timeout: 15000 });

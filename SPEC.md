@@ -110,7 +110,8 @@ type TestRunData = {
 await loginWithMicrosoft(page);
 
 await loginWithMicrosoft(page, {
-  username: CREDENTIALS.approver,
+  username: CREDENTIALS.approver.username,
+  password: CREDENTIALS.approver.password,
   useAnotherAccount: true,
 });
 ```
@@ -575,12 +576,25 @@ await actOnPendingRequest(page, {
   - `createSftpCorporateProfile()`
   - `createEmailCorporateProfile()`
 
-#### `submitCorporateProfile(page)`
+### `common/core/http-retry.helper.ts`
 
-- หน้าที่: ตรวจว่าปุ่ม submit ใช้งานได้ แล้วกด submit
+#### `submitWithRetryOn429(page, submitAction, options?)`
+
+- หน้าที่: retry การ submit หรือ action ที่สร้าง request เมื่อ backend ตอบ `429 Too Many Requests`
+- รับค่า:
+  - `page`: Playwright `Page`
+  - `submitAction`: function ที่ trigger submit
+  - `options.maxRetries?`: จำนวนรอบ retry
+  - `options.retryDelayMs?`: เวลารอก่อน retry รอบถัดไป
+  - `options.settleDelayMs?`: เวลารอให้ response นิ่งก่อนตัดสินใจ retry
+  - `options.responseUrlIncludes?`: path ที่ใช้ filter response 429
+  - `options.logPrefix?`: prefix สำหรับ log แต่ละรอบ
+  - `options.onRetry?`: callback สำหรับ reset state ก่อน retry
 - ถูกใช้โดย:
   - `createSftpCorporateProfile()`
   - `createEmailCorporateProfile()`
+  - `createIncomingProfile()`
+  - duplicate checks ใน `tests/corporate-profile.spec.ts`
 
 ### `incoming-profile.helper.ts`
 
@@ -622,7 +636,8 @@ test('Corporate Report flow', async ({ page }) => {
 
   await test.step('Part 2: Approver approves requests', async () => {
     await loginWithMicrosoft(page, {
-      username: CREDENTIALS.approver,
+      username: CREDENTIALS.approver.username,
+      password: CREDENTIALS.approver.password,
       useAnotherAccount: true,
     });
     

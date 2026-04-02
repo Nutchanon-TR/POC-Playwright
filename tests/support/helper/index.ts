@@ -1,5 +1,6 @@
 export * from './common/core/auth.helper';
 export * from './common/core/data.helper';
+export * from './common/core/http-retry.helper';
 export * from './common/ui/dialog.helper';
 export * from './common/ui/form.helper';
 export * from './common/ui/navigation.helper';

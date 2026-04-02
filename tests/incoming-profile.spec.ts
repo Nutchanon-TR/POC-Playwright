@@ -23,6 +23,7 @@ import {
     searchIncomingProfile,
     selectFirstIncomingCorporateId,
     signOut,
+    todayAsDdMmYyyy,
 } from './support/helper';
 
 test('Incoming Profile End-to-End Flow', async ({ page }) => {
@@ -40,7 +41,7 @@ test('Incoming Profile End-to-End Flow', async ({ page }) => {
         await openIncomingProfileAddForm(page);
         await selectFirstIncomingCorporateId(page);
         await fillIncomingProfileForm(page, {
-            effectiveDate: new Date().toLocaleDateString('en-GB'),
+            effectiveDate: todayAsDdMmYyyy(),
             remark: 'Incoming missing account check',
         });
         await expect(page.getByRole('button', { name: UI_TEXT.buttons.submit })).toBeDisabled();
@@ -49,8 +50,20 @@ test('Incoming Profile End-to-End Flow', async ({ page }) => {
         await openIncomingProfileAddForm(page);
         await selectFirstIncomingCorporateId(page);
         await fillIncomingProfileForm(page, {
+            accountNo: 'ABC1234567',
+            effectiveDate: todayAsDdMmYyyy(),
+            remark: 'Incoming non-numeric account format',
+        });
+        await page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark).click();
+        await expect(page.getByText(TEST_CONTENT.validationMessages.incomingAccountNo)).toBeVisible();
+        await expect(page.getByRole('button', { name: UI_TEXT.buttons.submit })).toBeDisabled();
+        await page.getByRole('button', { name: /Clear/i }).click();
+
+        await openIncomingProfileAddForm(page);
+        await selectFirstIncomingCorporateId(page);
+        await fillIncomingProfileForm(page, {
             accountNo: '12345',
-            effectiveDate: new Date().toLocaleDateString('en-GB'),
+            effectiveDate: todayAsDdMmYyyy(),
             remark: 'Incoming invalid account format',
         });
         await page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark).click();
@@ -64,7 +77,7 @@ test('Incoming Profile End-to-End Flow', async ({ page }) => {
         await selectFirstIncomingCorporateId(page);
         await fillIncomingProfileForm(page, {
             accountNo: approvedIncoming.accountNo,
-            effectiveDate: new Date().toLocaleDateString('en-GB'),
+            effectiveDate: todayAsDdMmYyyy(),
             remark: `${approvedIncoming.remark} duplicate`,
         });
         await page.getByRole('button', { name: UI_TEXT.buttons.submit }).click();
