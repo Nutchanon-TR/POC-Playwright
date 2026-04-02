@@ -17,8 +17,8 @@ import {
 } from '../../support/helper';
 
 export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
-    test.describe.serial('Delete', () => {
-        test('Maker verifies update and submits delete', async ({ page }) => {
+    test.describe('Delete', () => {
+        test('1. Maker verifies update and submits delete', async ({ page }) => {
             test.setTimeout(600000);
             const { emailApproved } = ctx.runData().corporateProfiles;
 
@@ -47,7 +47,7 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await page.waitForTimeout(3000);
         });
 
-        test('Approver approves delete', async ({ page }) => {
+        test('2. Approver approves delete', async ({ page }) => {
             test.setTimeout(600000);
             const { emailApproved } = ctx.runData().corporateProfiles;
 
@@ -68,7 +68,7 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await page.waitForTimeout(3000);
         });
 
-        test('Maker confirms deleted', async ({ page }) => {
+        test('3. Maker confirms deleted', async ({ page }) => {
             test.setTimeout(600000);
             const { emailApproved } = ctx.runData().corporateProfiles;
 

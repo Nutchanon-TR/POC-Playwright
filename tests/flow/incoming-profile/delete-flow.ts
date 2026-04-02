@@ -18,8 +18,8 @@ import {
 } from '../../support/helper';
 
 export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
-    test.describe.serial('Delete', () => {
-        test('Maker verifies update and submits delete', async ({ page }) => {
+    test.describe('Delete', () => {
+        test('1. Maker verifies update and submits delete', async ({ page }) => {
             test.setTimeout(600000);
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
@@ -52,7 +52,7 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('Approver approves delete', async ({ page }) => {
+        test('2. Approver approves delete', async ({ page }) => {
             test.setTimeout(600000);
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
@@ -75,7 +75,7 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('Maker confirms deleted', async ({ page }) => {
+        test('3. Maker confirms deleted', async ({ page }) => {
             test.setTimeout(600000);
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 

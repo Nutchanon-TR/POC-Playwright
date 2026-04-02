@@ -21,8 +21,8 @@ import {
 } from '../../support/helper';
 
 export function incomingCreateFlow(ctx: { runData: () => TestRunData }) {
-    test.describe.serial('Create', () => {
-        test('Maker validates form guards, creates profiles, verifies duplicate', async ({ page }) => {
+    test.describe('Create', () => {
+        test('1. Maker validates form guards, creates profiles, verifies duplicate', async ({ page }) => {
             test.setTimeout(600000);
             const { approved: approvedIncoming, rejected: rejectedIncoming } = ctx.runData().incomingProfiles;
 
@@ -81,7 +81,7 @@ export function incomingCreateFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('Approver approves and rejects create requests', async ({ page }) => {
+        test('2. Approver approves and rejects create requests', async ({ page }) => {
             test.setTimeout(600000);
             const { approved: approvedIncoming, rejected: rejectedIncoming } = ctx.runData().incomingProfiles;
 

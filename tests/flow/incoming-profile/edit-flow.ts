@@ -19,8 +19,8 @@ import {
 } from '../../support/helper';
 
 export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
-    test.describe.serial('Edit', () => {
-        test('Maker validates edit guards and submits update', async ({ page }) => {
+    test.describe('Edit', () => {
+        test('1. Maker validates edit guards and submits update', async ({ page }) => {
             test.setTimeout(600000);
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
@@ -63,7 +63,7 @@ export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('Approver approves update', async ({ page }) => {
+        test('2. Approver approves update', async ({ page }) => {
             test.setTimeout(600000);
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 

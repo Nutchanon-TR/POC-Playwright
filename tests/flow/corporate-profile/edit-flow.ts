@@ -18,8 +18,8 @@ import {
 } from '../../support/helper';
 
 export function corporateEditFlow(ctx: { runData: () => TestRunData }) {
-    test.describe.serial('Edit', () => {
-        test('Maker validates edit guards and submits update', async ({ page }) => {
+    test.describe('Edit', () => {
+        test('1. Maker validates edit guards and submits update', async ({ page }) => {
             test.setTimeout(600000);
             const { emailApproved, sftpApproved } = ctx.runData().corporateProfiles;
 
@@ -69,7 +69,7 @@ export function corporateEditFlow(ctx: { runData: () => TestRunData }) {
             await page.waitForTimeout(3000);
         });
 
-        test('Approver approves update', async ({ page }) => {
+        test('2. Approver approves update', async ({ page }) => {
             test.setTimeout(600000);
             const { emailApproved } = ctx.runData().corporateProfiles;
 

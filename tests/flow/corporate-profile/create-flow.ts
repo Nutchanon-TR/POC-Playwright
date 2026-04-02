@@ -25,8 +25,8 @@ import {
 } from '../../support/helper';
 
 export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
-    test.describe.serial('Create', () => {
-        test('Maker validates security & form guards', async ({ page }) => {
+    test.describe('Create', () => {
+        test('1. Maker validates security & form guards', async ({ page }) => {
             test.setTimeout(600000);
             const runData = ctx.runData();
             const { sftpApproved, emailApproved } = runData.corporateProfiles;
@@ -104,7 +104,7 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('Maker creates SFTP & Email profiles', async ({ page }) => {
+        test('2. Maker creates SFTP & Email profiles', async ({ page }) => {
             test.setTimeout(600000);
             const { sftpApproved, sftpRejected, emailApproved, emailRejected } = ctx.runData().corporateProfiles;
             const extraEmail = TEST_CONTENT.emails[2];
@@ -129,7 +129,7 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('Maker verifies duplicate blocking', async ({ page }) => {
+        test('3. Maker verifies duplicate blocking', async ({ page }) => {
             test.setTimeout(600000);
             const { sftpApproved, emailApproved } = ctx.runData().corporateProfiles;
 
@@ -176,7 +176,7 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             await page.context().clearCookies();
         });
 
-        test('Approver approves and rejects create requests', async ({ page }) => {
+        test('4. Approver approves and rejects create requests', async ({ page }) => {
             test.setTimeout(600000);
             const { sftpApproved, sftpRejected, emailApproved, emailRejected } = ctx.runData().corporateProfiles;
 
