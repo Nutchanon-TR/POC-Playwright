@@ -222,3 +222,76 @@ export async function deleteCorporateProfile(
     await confirmVisibleDialog(page, PATTERNS.confirmDelete);
     await page.waitForLoadState('networkidle');
 }
+
+export async function openSftpCreateForm(page: Page, profile: CorporateProfileData) {
+    await openCorporateProfileAddForm(page);
+    // SFTP is already selected by default, so we switch away and back to trigger Ant Design change detection.
+    await page.locator('label').filter({ hasText: UI_TEXT.sendType.email }).click();
+    await page.waitForTimeout(200);
+    await selectCorporateSendType(page, profile.sendType);
+    await fillCorporateProfileBaseFields(page, profile);
+}
+
+export async function openEmailCreateForm(
+    page: Page,
+    profile: Pick<CorporateProfileData, 'corporateId' | 'thaiName' | 'englishName' | 'remark'>,
+    emailOptions: {
+        taxId?: string;
+        emails?: string[];
+        checkRound1?: boolean;
+    } = {}
+) {
+    await openCorporateProfileAddForm(page);
+    await fillCorporateProfileBaseFields(page, profile);
+    await selectCorporateSendType(page, 'Email');
+    await fillCorporateEmailFields(page, emailOptions);
+}
+
+export async function submitCorporateCreateForm(
+    page: Page,
+    logPrefix: string,
+    options: {
+        force?: boolean;
+        settleDelayMs?: number;
+        onRetry?: (attempt: number) => Promise<void> | void;
+    } = {}
+) {
+    await submitWithRetryOn429(page, async () => {
+        const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
+
+        if (options.force) {
+            await submitButton.click({ force: true });
+            return;
+        }
+
+        const isEnabled = await submitButton.isEnabled().catch(() => false);
+        if (isEnabled) {
+            await submitButton.click();
+            return;
+        }
+
+        await page.evaluate(() => {
+            const formElement = document.querySelector('form[name="validateOnly"]');
+            if (formElement) {
+                const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                formElement.dispatchEvent(submitEvent);
+            }
+        });
+    }, {
+        logPrefix,
+        onRetry: options.onRetry,
+        settleDelayMs: options.settleDelayMs,
+    });
+}
+
+export async function closeNotificationAndClearForm(page: Page) {
+    const closeButton = page.getByLabel('Close', { exact: true }).first();
+    const hasCloseButton = await closeButton.isVisible({ timeout: 1000 }).catch(() => false);
+
+    if (hasCloseButton) {
+        await closeButton.click();
+        await page.waitForTimeout(500);
+    }
+
+    await page.getByRole('button', { name: /Clear/i }).click();
+}
