@@ -1,7 +1,12 @@
 export const CREDENTIALS = {
-    creator: 'corporatereport02@scbcorp.onmicrosoft.com',
-    approver: 'corporatereport04@scbcorp.onmicrosoft.com',
-    password: 'CAP!scb2026#',
+    creator: {
+        username: process.env.CREATOR_USERNAME || 'corporatereport02@scbcorp.onmicrosoft.com',
+        password: process.env.CREATOR_PASSWORD || 'CORPREPORT2!scb2026$',
+    },
+    approver: {
+        username: process.env.APPROVER_USERNAME || 'corporatereport04@scbcorp.onmicrosoft.com',
+        password: process.env.APPROVER_PASSWORD || 'CORPREPORT2!scb2026$',
+    },
 } as const;
 
 export const URLS = {

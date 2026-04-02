@@ -11,21 +11,21 @@ export function buildTestRunData(timestamp = Date.now()): TestRunData {
         corporateProfiles: {
             sftpApproved: {
                 corporateId: `SFTP-A-${idSuffix}`,
-                thaiName: `${TEST_CONTENT.names.sftpThai}-${idSuffix}`,
+                thaiName: `${TEST_CONTENT.names.sftpThai} ${idSuffix}`,
                 englishName: `${TEST_CONTENT.names.sftpEnglish}-${idSuffix}`,
                 remark: TEST_CONTENT.remarks.sftpApproveCreate,
                 sendType: 'SFTP',
             },
             sftpRejected: {
                 corporateId: `SFTP-R-${idSuffix}`,
-                thaiName: `${TEST_CONTENT.names.sftpThai}-R-${idSuffix}`,
+                thaiName: `${TEST_CONTENT.names.sftpThai} ${idSuffix}`,
                 englishName: `${TEST_CONTENT.names.sftpEnglish} Reject`,
                 remark: TEST_CONTENT.remarks.sftpRejectCreate,
                 sendType: 'SFTP',
             },
             emailApproved: {
                 corporateId: `EMAIL-A-${idSuffix}`,
-                thaiName: `${TEST_CONTENT.names.emailThai}-${idSuffix}`,
+                thaiName: `${TEST_CONTENT.names.emailThai} ${idSuffix}`,
                 englishName: `${TEST_CONTENT.names.emailEnglish}-${idSuffix}`,
                 remark: TEST_CONTENT.remarks.emailApproveCreate,
                 sendType: 'Email',
@@ -36,7 +36,7 @@ export function buildTestRunData(timestamp = Date.now()): TestRunData {
             },
             emailRejected: {
                 corporateId: `EMAIL-R-${idSuffix}`,
-                thaiName: `${TEST_CONTENT.names.emailThai}-R-${idSuffix}`,
+                thaiName: `${TEST_CONTENT.names.emailThai} ${idSuffix}`,
                 englishName: `${TEST_CONTENT.names.emailEnglish} Reject`,
                 remark: TEST_CONTENT.remarks.emailRejectCreate,
                 sendType: 'Email',

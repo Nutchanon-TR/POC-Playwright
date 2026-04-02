@@ -82,5 +82,5 @@ export async function expectEmptyState(
     page: Page,
     text: string = TEST_CONTENT.validationMessages.emptyState
 ) {
-    await expect(page.getByText(text).first()).toBeVisible();
+    await expect(page.getByText(text).nth(1)).toBeVisible();
 }

@@ -3,12 +3,12 @@ import { UI_TEXT, URLS } from '../../../constant';
 import type { PendingRequestTab } from '../../types';
 
 export async function openCorporateProfiles(page: Page) {
-    const corporateProfilesLink = page.getByRole('link', { name: UI_TEXT.menu.corporateProfiles });
+    const corporateProfilesLink = page.getByRole('menuitem', { name: UI_TEXT.menu.corporateProfiles }).getByRole('link');
 
     const isVisible = await corporateProfilesLink.isVisible({ timeout: 1000 }).catch(() => false);
 
     if (!isVisible) {
-        const corporateReportMenu = page.getByText(UI_TEXT.menu.corporateReport);
+        const corporateReportMenu = page.getByRole('complementary').getByText(UI_TEXT.menu.corporateReport);
         await expect(corporateReportMenu).toBeVisible();
         await corporateReportMenu.click({ force: true });
         await expect(corporateProfilesLink).toBeVisible();
@@ -19,19 +19,18 @@ export async function openCorporateProfiles(page: Page) {
 }
 
 export async function openIncomingProfiles(page: Page) {
-    const incomingProfilesLink = page.getByRole('link', { name: UI_TEXT.menu.incomingProfiles });
+    const incomingProfilesLink = page.getByRole('menuitem', { name: UI_TEXT.menu.incomingProfiles }).getByRole('link');
 
     const isVisible = await incomingProfilesLink.isVisible({ timeout: 1000 }).catch(() => false);
 
     if (!isVisible) {
-        const corporateReportMenu = page.getByText(UI_TEXT.menu.corporateReport);
+        const corporateReportMenu = page.getByRole('complementary').getByText(UI_TEXT.menu.corporateReport);
         await expect(corporateReportMenu).toBeVisible();
         await corporateReportMenu.click({ force: true });
         await expect(incomingProfilesLink).toBeVisible();
     }
 
     await incomingProfilesLink.click();
-    await page.getByRole('link', { name: 'Incoming Profiles' }).click();
     await expect(page).toHaveURL(URLS.incomingProfilesPattern, { timeout: 15000 });
 }
 
@@ -45,10 +44,10 @@ export async function openPendingRequests(
     const isOnPendingRequestsPage = currentUrl.includes('/pending-requests');
 
     if (!isOnPendingRequestsPage) {
-        const corporateReportMenu = page.getByText(UI_TEXT.menu.corporateReport);
+        const corporateReportMenu = page.getByRole('complementary').getByText(UI_TEXT.menu.corporateReport);
         await expect(corporateReportMenu).toBeVisible({ timeout: 15000 });
 
-        const pendingRequestsLink = page.getByRole('link', { name: UI_TEXT.menu.pendingRequests });
+        const pendingRequestsLink = page.getByRole('menuitem', { name: UI_TEXT.menu.pendingRequests }).getByRole('link');
         const isExpanded = await pendingRequestsLink.isVisible({ timeout: 1000 }).catch(() => false);
 
         if (!isExpanded) {

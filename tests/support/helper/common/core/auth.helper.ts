@@ -12,8 +12,8 @@ export async function loginWithMicrosoft(
     options: LoginOptions = {}
 ) {
     const {
-        username = CREDENTIALS.creator,
-        password = CREDENTIALS.password,
+        username = CREDENTIALS.creator.username,
+        password = CREDENTIALS.creator.password,
         useAnotherAccount = false,
     } = options;
 
@@ -29,12 +29,18 @@ export async function loginWithMicrosoft(
 
     if (useAnotherAccount) {
         const useAnotherAccountButton = page.getByRole('button', { name: UI_TEXT.buttons.useAnotherAccount });
-        await expect(useAnotherAccountButton).toBeVisible();
-        await useAnotherAccountButton.click();
+        // Try to find "Use another account" button - if not visible, might already be on username field
+        const isButtonVisible = await useAnotherAccountButton.isVisible({ timeout: 3000 }).catch(() => false);
+        if (isButtonVisible) {
+            await useAnotherAccountButton.click();
+        }
     }
 
-    await page.getByRole('textbox', { name: UI_TEXT.fields.username }).click();
-    await page.getByRole('textbox', { name: UI_TEXT.fields.username }).fill(username);
+    await page.waitForLoadState('networkidle', { timeout: 15000 });
+    const usernameField = page.getByRole('textbox', { name: UI_TEXT.fields.username });
+    await expect(usernameField).toBeVisible({ timeout: 15000 });
+    await usernameField.click();
+    await usernameField.fill(username);
 
     const nextButton = page.getByRole('button', { name: UI_TEXT.buttons.next });
     await expect(nextButton).toBeEnabled();

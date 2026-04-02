@@ -77,7 +77,8 @@ test('Incoming Profile End-to-End Flow', async ({ page }) => {
 
     await test.step('Part 2: Approver approves and rejects incoming create requests', async () => {
         await loginWithMicrosoft(page, {
-            username: CREDENTIALS.approver,
+            username: CREDENTIALS.approver.username,
+            password: CREDENTIALS.approver.password,
             useAnotherAccount: true,
         });
 
@@ -99,7 +100,8 @@ test('Incoming Profile End-to-End Flow', async ({ page }) => {
 
     await test.step('Part 3: Maker performs negative edit checks and submits a valid update', async () => {
         await loginWithMicrosoft(page, {
-            username: CREDENTIALS.creator,
+            username: CREDENTIALS.creator.username,
+            password: CREDENTIALS.creator.password,
             useAnotherAccount: true,
         });
 
@@ -138,7 +140,8 @@ test('Incoming Profile End-to-End Flow', async ({ page }) => {
 
     await test.step('Part 4: Approver approves the incoming update request', async () => {
         await loginWithMicrosoft(page, {
-            username: CREDENTIALS.approver,
+            username: CREDENTIALS.approver.username,
+            password: CREDENTIALS.approver.password,
             useAnotherAccount: true,
         });
 
@@ -157,7 +160,8 @@ test('Incoming Profile End-to-End Flow', async ({ page }) => {
 
     await test.step('Part 5: Maker verifies update and submits incoming delete request', async () => {
         await loginWithMicrosoft(page, {
-            username: CREDENTIALS.creator,
+            username: CREDENTIALS.creator.username,
+            password: CREDENTIALS.creator.password,
             useAnotherAccount: true,
         });
 
@@ -186,7 +190,8 @@ test('Incoming Profile End-to-End Flow', async ({ page }) => {
 
     await test.step('Part 6: Approver approves incoming delete request', async () => {
         await loginWithMicrosoft(page, {
-            username: CREDENTIALS.approver,
+            username: CREDENTIALS.approver.username,
+            password: CREDENTIALS.approver.password,
             useAnotherAccount: true,
         });
 
@@ -205,7 +210,8 @@ test('Incoming Profile End-to-End Flow', async ({ page }) => {
 
     await test.step('Part 7: Maker verifies the incoming profile has been removed', async () => {
         await loginWithMicrosoft(page, {
-            username: CREDENTIALS.creator,
+            username: CREDENTIALS.creator.username,
+            password: CREDENTIALS.creator.password,
             useAnotherAccount: true,
         });
 

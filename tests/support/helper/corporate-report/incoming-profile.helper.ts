@@ -44,6 +44,69 @@ function waitForIncomingProfileResponse(page: Page) {
     );
 }
 
+/**
+ * Submit incoming profile form with retry on 429 (Rate Limiting) error
+ * @param page Playwright Page
+ * @param submitAction Function that triggers form submission
+ * @param maxRetries Maximum number of retries (default: 3)
+ * @param retryDelay Delay in ms before retry (default: 5000)
+ */
+async function submitIncomingFormWithRetry(
+    page: Page,
+    submitAction: () => Promise<void>,
+    maxRetries: number = 3,
+    retryDelay: number = 5000
+) {
+    let attempt = 0;
+    let last429Error: any = null;
+
+    while (attempt < maxRetries) {
+        attempt++;
+        let got429 = false;
+
+        // Listen for 429 responses
+        const responseHandler = (response: any) => {
+            if (response.status() === 429 &&
+                (response.url().includes('/corporate-profiles') || response.url().includes('/incoming-profiles'))) {
+                got429 = true;
+                last429Error = { status: 429, url: response.url() };
+            }
+        };
+
+        page.on('response', responseHandler);
+
+        try {
+            await submitAction();
+            await page.waitForTimeout(500); // Wait for potential 429 response
+
+            // Remove listener
+            page.off('response', responseHandler);
+
+            if (got429) {
+                console.log(`[Incoming Profile - Attempt ${attempt}/${maxRetries}] Got 429 error, waiting ${retryDelay}ms before retry...`);
+                await page.waitForTimeout(retryDelay);
+                continue; // Retry
+            }
+
+            // Success - no 429
+            return;
+        } catch (error) {
+            page.off('response', responseHandler);
+
+            if (got429 && attempt < maxRetries) {
+                console.log(`[Incoming Profile - Attempt ${attempt}/${maxRetries}] Got 429 error, waiting ${retryDelay}ms before retry...`);
+                await page.waitForTimeout(retryDelay);
+                continue;
+            }
+
+            throw error; // Re-throw if not 429 or max retries reached
+        }
+    }
+
+    // If we got here, all retries failed with 429
+    throw new Error(`Failed after ${maxRetries} attempts due to rate limiting (429): ${last429Error?.url}`);
+}
+
 export async function selectFirstIncomingCorporateId(page: Page) {
     await page.getByRole('combobox', { name: UI_TEXT.fields.incomingCorporateId }).click();
 
@@ -87,9 +150,12 @@ export async function createIncomingProfile(
         remark: profile.remark,
     });
 
-    const responsePromise = waitForIncomingProfileResponse(page);
-    await submitIncomingProfile(page);
-    await responsePromise;
+    // Submit with retry on 429
+    await submitIncomingFormWithRetry(page, async () => {
+        const responsePromise = waitForIncomingProfileResponse(page);
+        await submitIncomingProfile(page);
+        await responsePromise;
+    });
 
     await expect(page).toHaveURL(URLS.incomingProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
