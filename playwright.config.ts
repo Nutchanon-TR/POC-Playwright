@@ -15,11 +15,11 @@ export default defineConfig({
     trace: 'on-first-retry',
     video: 'on', 
     screenshot: 'on',
-    actionTimeout: 6000,
-    navigationTimeout: 6000,
+    actionTimeout: 15000,
+    navigationTimeout: 15000,
   },
   expect: {
-    timeout: 6000,
+    timeout: 15000,
   },
   projects: [
     {

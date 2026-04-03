@@ -1,11 +1,11 @@
 export const CREDENTIALS = {
     creator: {
-        username: process.env.CREATOR_USERNAME || 'corporatereport02@scbcorp.onmicrosoft.com',
-        password: process.env.CREATOR_PASSWORD || 'CORPREPORT2!scb2026$',
+        username: process.env.CREATOR_USERNAME!,
+        password: process.env.CREATOR_PASSWORD!,
     },
     approver: {
-        username: process.env.APPROVER_USERNAME || 'corporatereport04@scbcorp.onmicrosoft.com',
-        password: process.env.APPROVER_PASSWORD || 'CORPREPORT4!scb2026$',
+        username: process.env.APPROVER_USERNAME!,
+        password: process.env.APPROVER_PASSWORD!,
     },
 } as const;
 
