@@ -48,18 +48,10 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
                 rowTexts: [emailApproved.corporateId, emailApproved.updatedRemark],
             });
 
-            await signOut(page);
-            await page.waitForTimeout(3000);
         });
 
         await test.step('2. Maker verifies duplicate delete is blocked', async () => {
             const { emailApproved } = ctx.runData().corporateProfiles;
-
-            await loginWithMicrosoft(page, {
-                username: CREDENTIALS.creator.username,
-                password: CREDENTIALS.creator.password,
-                useAnotherAccount: true,
-            });
 
             await searchCorporateProfile(page, emailApproved.corporateId);
             const row = await findTableRowByTexts(page, [

@@ -61,18 +61,10 @@ export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
             await submitButton.click();
             await confirmVisibleDialog(page, PATTERNS.confirmSubmit);
             await closeSuccessDialog(page);
-
-            await signOut(page);
         });
 
         await test.step('2. Maker verifies duplicate edit is blocked', async () => {
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
-
-            await loginWithMicrosoft(page, {
-                username: CREDENTIALS.creator.username,
-                password: CREDENTIALS.creator.password,
-                useAnotherAccount: true,
-            });
 
             await searchIncomingProfile(page, approvedIncoming.accountNo);
             const row = await findTableRowByTexts(page, [approvedIncoming.remark]);

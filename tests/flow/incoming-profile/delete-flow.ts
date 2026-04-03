@@ -53,17 +53,10 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
                 ],
             });
 
-            await signOut(page);
         });
 
         await test.step('2. Maker verifies duplicate delete is blocked', async () => {
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
-
-            await loginWithMicrosoft(page, {
-                username: CREDENTIALS.creator.username,
-                password: CREDENTIALS.creator.password,
-                useAnotherAccount: true,
-            });
 
             await searchIncomingProfile(page, approvedIncoming.updatedAccountNo || approvedIncoming.accountNo);
             const row = await findTableRowByTexts(page, [

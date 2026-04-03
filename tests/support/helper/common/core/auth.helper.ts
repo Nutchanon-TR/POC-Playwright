@@ -29,11 +29,8 @@ export async function loginWithMicrosoft(
 
     if (useAnotherAccount) {
         const useAnotherAccountButton = page.getByRole('button', { name: UI_TEXT.buttons.useAnotherAccount });
-        // Try to find "Use another account" button - if not visible, might already be on username field
-        const isButtonVisible = await useAnotherAccountButton.isVisible({ timeout: 3000 }).catch(() => false);
-        if (isButtonVisible) {
-            await useAnotherAccountButton.click();
-        }
+        await expect(useAnotherAccountButton).toBeVisible({ timeout: 3000 });
+        await useAnotherAccountButton.click();
     }
 
     await page.waitForLoadState('networkidle', { timeout: 15000 });

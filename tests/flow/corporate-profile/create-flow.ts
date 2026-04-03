@@ -101,15 +101,11 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             await expect(page.getByText(TEST_CONTENT.validationMessages.taxIdMinLength)).toBeVisible();
             await expect(page.getByRole('button', { name: UI_TEXT.buttons.submit })).toBeDisabled();
             await page.getByRole('button', { name: /Clear/i }).click();
-
-            await signOut(page);
         });
 
         await test.step('2. Maker creates SFTP & Email profiles', async () => {
             const { sftpApproved, sftpRejected, emailApproved, emailRejected } = ctx.runData().corporateProfiles;
             const extraEmail = TEST_CONTENT.emails[2];
-
-            await loginWithMicrosoft(page);
 
             await createSftpCorporateProfile(page, sftpApproved);
             await createSftpCorporateProfile(page, sftpRejected);
@@ -125,18 +121,10 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             await closeSuccessDialog(page);
 
             await createEmailCorporateProfile(page, emailRejected);
-
-            await signOut(page);
         });
 
         await test.step('3. Maker verifies duplicate blocking', async () => {
             const { sftpApproved, emailApproved } = ctx.runData().corporateProfiles;
-
-            await loginWithMicrosoft(page, {
-                username: CREDENTIALS.creator.username,
-                password: CREDENTIALS.creator.password,
-                useAnotherAccount: true,
-            });
 
             const reopenDuplicateSftpForm = async () => {
                 await openSftpCreateForm(page, sftpApproved);
