@@ -6,14 +6,21 @@ const RATE_LIMIT_WAIT_MS = 15_000;
 
 export async function submitWithRetryOn429(
     page: Page,
-    mode: 'create' | 'edit' = 'create'
+    mode: 'create' | 'edit' | 'edit-incoming' = 'create'
 ): Promise<void> {
-    if (mode === 'edit') {
-        await page.getByRole('button', { name: UI_TEXT.buttons.save }).click();
-        await page.getByRole('button', { name: 'Yes' }).click();
-    } else {
-        await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
-    }
+    const clickAndConfirm = async () => {
+        if (mode === 'edit') {
+            await page.getByRole('button', { name: UI_TEXT.buttons.save }).click();
+            await page.getByRole('button', { name: 'Yes' }).click();
+        } else if (mode === 'edit-incoming') {
+            await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
+            await page.getByRole('button', { name: 'Yes' }).click();
+        } else {
+            await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
+        }
+    };
+
+    await clickAndConfirm();
 
     const got429 = await page
         .getByText(RATE_LIMIT_NOTIFY_TEXT)
@@ -23,11 +30,6 @@ export async function submitWithRetryOn429(
 
     if (got429) {
         await page.waitForTimeout(RATE_LIMIT_WAIT_MS);
-        if (mode === 'edit') {
-            await page.getByRole('button', { name: UI_TEXT.buttons.save }).click();
-            await page.getByRole('button', { name: 'Yes' }).click();
-        } else {
-            await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
-        }
+        await clickAndConfirm();
     }
 }

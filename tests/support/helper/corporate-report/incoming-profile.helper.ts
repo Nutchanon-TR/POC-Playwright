@@ -116,8 +116,7 @@ export async function editIncomingProfile(
     }
     await page.locator('label').filter({ hasText: options.status }).click();
     await page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark).fill(options.remark);
-    await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
-    await confirmVisibleDialog(page, PATTERNS.confirmSubmit);
+    await submitWithRetryOn429(page, 'edit-incoming');
 
     await expect(page).toHaveURL(URLS.incomingProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);

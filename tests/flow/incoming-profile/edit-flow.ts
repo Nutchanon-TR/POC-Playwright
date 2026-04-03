@@ -9,13 +9,13 @@ import {
     actOnPendingRequest,
     clickRowAction,
     closeSuccessDialog,
-    confirmVisibleDialog,
     expectNotificationMessage,
     findTableRowByTexts,
     formatIncomingAccountPattern,
     loginWithMicrosoft,
     searchIncomingProfile,
     signOut,
+    submitWithRetryOn429,
     type TestRunData,
 } from '../../support/helper';
 
@@ -57,8 +57,7 @@ export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
             await page.locator('label').filter({ hasText: approvedIncoming.updatedStatus ?? UI_TEXT.status.inactive }).click();
             await remarkField.fill(approvedIncoming.updatedRemark ?? '');
             await expect(submitButton).toBeEnabled();
-            await submitButton.click();
-            await confirmVisibleDialog(page, PATTERNS.confirmSubmit);
+            await submitWithRetryOn429(page, 'edit-incoming');
             await closeSuccessDialog(page);
         });
 
@@ -71,8 +70,7 @@ export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
 
             const remarkField = page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark);
             await remarkField.fill('Duplicate edit attempt');
-            await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
-            await confirmVisibleDialog(page, PATTERNS.confirmSubmit);
+            await submitWithRetryOn429(page, 'edit-incoming');
             await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
 
             await signOut(page);

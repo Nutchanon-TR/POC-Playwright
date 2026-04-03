@@ -9,12 +9,12 @@ import {
     actOnPendingRequest,
     clickRowAction,
     closeSuccessDialog,
-    confirmVisibleDialog,
     expectNotificationMessage,
     findTableRowByTexts,
     loginWithMicrosoft,
     searchCorporateProfile,
     signOut,
+    submitWithRetryOn429,
     type TestRunData,
 } from '../../support/helper';
 
@@ -63,8 +63,7 @@ export function corporateEditFlow(ctx: { runData: () => TestRunData }) {
             await englishNameField.fill(emailApproved.updatedEnglishName);
             await remarkField.fill(emailApproved.updatedRemark);
             await expect(saveButton).toBeEnabled();
-            await saveButton.click();
-            await confirmVisibleDialog(page, PATTERNS.confirmSave);
+            await submitWithRetryOn429(page, 'edit');
             await closeSuccessDialog(page);
 
         });
@@ -82,8 +81,7 @@ export function corporateEditFlow(ctx: { runData: () => TestRunData }) {
 
             const remarkField = page.getByRole('textbox', { name: UI_TEXT.fields.remark });
             await remarkField.fill('Duplicate edit attempt');
-            await page.getByRole('button', { name: UI_TEXT.buttons.save }).click();
-            await confirmVisibleDialog(page, PATTERNS.confirmSave);
+            await submitWithRetryOn429(page, 'edit');
             await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
 
             await signOut(page);
