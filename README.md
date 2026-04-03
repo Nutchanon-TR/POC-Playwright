@@ -130,6 +130,10 @@ npm run test:incoming-profile
 npm run report
 ```
 
+``` codegen
+npx playwright codegen https://corpadmin-dev.se.scb.co.th
+```
+
 ## Notes
 
 - test suite ยิงกับ environment จริงของระบบ

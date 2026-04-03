@@ -28,6 +28,8 @@ export const TEST_CONTENT = {
     },
     notifications: {
         pendingApproval: 'Your submission is pending approval.',
+        duplicateCorporateProfile: 'Corporate profile already exists.',
+        duplicateIncomingProfile: 'Incoming profile already exists.',
         duplicatePendingRequest: 'There is a pending request for this profile.',
     },
     validationMessages: {

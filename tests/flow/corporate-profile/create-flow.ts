@@ -25,9 +25,10 @@ import {
 } from '../../support/helper';
 
 export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
-    test.describe('Create', () => {
-        test('1. Maker validates security & form guards', async ({ page }) => {
-            test.setTimeout(600000);
+    test('Create', async ({ page }) => {
+        test.setTimeout(600000);
+
+        await test.step('1. Maker validates security & form guards', async () => {
             const runData = ctx.runData();
             const { sftpApproved, emailApproved } = runData.corporateProfiles;
 
@@ -104,8 +105,7 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('2. Maker creates SFTP & Email profiles', async ({ page }) => {
-            test.setTimeout(600000);
+        await test.step('2. Maker creates SFTP & Email profiles', async () => {
             const { sftpApproved, sftpRejected, emailApproved, emailRejected } = ctx.runData().corporateProfiles;
             const extraEmail = TEST_CONTENT.emails[2];
 
@@ -129,8 +129,7 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('3. Maker verifies duplicate blocking', async ({ page }) => {
-            test.setTimeout(600000);
+        await test.step('3. Maker verifies duplicate blocking', async () => {
             const { sftpApproved, emailApproved } = ctx.runData().corporateProfiles;
 
             await loginWithMicrosoft(page, {
@@ -159,7 +158,7 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
                 settleDelayMs: 1500,
                 onRetry: reopenDuplicateSftpForm,
             });
-            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicateCorporateProfile);
             await closeNotificationAndClearForm(page);
 
             await reopenDuplicateEmailForm();
@@ -168,7 +167,7 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
                 settleDelayMs: 1500,
                 onRetry: reopenDuplicateEmailForm,
             });
-            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicateCorporateProfile);
             await closeNotificationAndClearForm(page);
 
             await signOut(page);
@@ -176,8 +175,7 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             await page.context().clearCookies();
         });
 
-        test('4. Approver approves and rejects create requests', async ({ page }) => {
-            test.setTimeout(600000);
+        await test.step('4. Approver approves and rejects create requests', async () => {
             const { sftpApproved, sftpRejected, emailApproved, emailRejected } = ctx.runData().corporateProfiles;
 
             await page.waitForLoadState('networkidle');

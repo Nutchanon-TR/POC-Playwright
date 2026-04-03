@@ -18,9 +18,10 @@ import {
 } from '../../support/helper';
 
 export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
-    test.describe('Delete', () => {
-        test('1. Maker verifies update and submits delete', async ({ page }) => {
-            test.setTimeout(600000);
+    test('Delete', async ({ page }) => {
+        test.setTimeout(600000);
+
+        await test.step('1. Maker verifies update and submits delete', async () => {
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
             await loginWithMicrosoft(page, {
@@ -52,8 +53,7 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('2. Approver approves delete', async ({ page }) => {
-            test.setTimeout(600000);
+        await test.step('2. Approver approves delete', async () => {
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
             await loginWithMicrosoft(page, {
@@ -75,8 +75,7 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('3. Maker confirms deleted', async ({ page }) => {
-            test.setTimeout(600000);
+        await test.step('3. Maker confirms deleted', async () => {
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
             await loginWithMicrosoft(page, {

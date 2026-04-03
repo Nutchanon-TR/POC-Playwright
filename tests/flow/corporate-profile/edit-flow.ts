@@ -18,9 +18,10 @@ import {
 } from '../../support/helper';
 
 export function corporateEditFlow(ctx: { runData: () => TestRunData }) {
-    test.describe('Edit', () => {
-        test('1. Maker validates edit guards and submits update', async ({ page }) => {
-            test.setTimeout(600000);
+    test('Edit', async ({ page }) => {
+        test.setTimeout(600000);
+
+        await test.step('1. Maker validates edit guards and submits update', async () => {
             const { emailApproved, sftpApproved } = ctx.runData().corporateProfiles;
 
             await page.waitForLoadState('networkidle');
@@ -69,8 +70,7 @@ export function corporateEditFlow(ctx: { runData: () => TestRunData }) {
             await page.waitForTimeout(3000);
         });
 
-        test('2. Approver approves update', async ({ page }) => {
-            test.setTimeout(600000);
+        await test.step('2. Approver approves update', async () => {
             const { emailApproved } = ctx.runData().corporateProfiles;
 
             await page.waitForLoadState('networkidle');

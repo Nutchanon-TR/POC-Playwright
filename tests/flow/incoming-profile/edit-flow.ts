@@ -19,9 +19,10 @@ import {
 } from '../../support/helper';
 
 export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
-    test.describe('Edit', () => {
-        test('1. Maker validates edit guards and submits update', async ({ page }) => {
-            test.setTimeout(600000);
+    test('Edit', async ({ page }) => {
+        test.setTimeout(600000);
+
+        await test.step('1. Maker validates edit guards and submits update', async () => {
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
             await loginWithMicrosoft(page, {
@@ -63,8 +64,7 @@ export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('2. Approver approves update', async ({ page }) => {
-            test.setTimeout(600000);
+        await test.step('2. Approver approves update', async () => {
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
             await loginWithMicrosoft(page, {

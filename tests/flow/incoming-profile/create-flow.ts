@@ -21,9 +21,10 @@ import {
 } from '../../support/helper';
 
 export function incomingCreateFlow(ctx: { runData: () => TestRunData }) {
-    test.describe('Create', () => {
-        test('1. Maker validates form guards, creates profiles, verifies duplicate', async ({ page }) => {
-            test.setTimeout(600000);
+    test('Create', async ({ page }) => {
+        test.setTimeout(600000);
+
+        await test.step('1. Maker validates form guards, creates profiles, verifies duplicate', async () => {
             const { approved: approvedIncoming, rejected: rejectedIncoming } = ctx.runData().incomingProfiles;
 
             await loginWithMicrosoft(page);
@@ -81,8 +82,7 @@ export function incomingCreateFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        test('2. Approver approves and rejects create requests', async ({ page }) => {
-            test.setTimeout(600000);
+        await test.step('2. Approver approves and rejects create requests', async () => {
             const { approved: approvedIncoming, rejected: rejectedIncoming } = ctx.runData().incomingProfiles;
 
             await loginWithMicrosoft(page, {
