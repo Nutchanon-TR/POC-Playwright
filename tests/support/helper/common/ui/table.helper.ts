@@ -1,16 +1,19 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { PATTERNS } from '../../constant';
+import { TEST_CONTENT } from '../../../constant';
 
 type RowAction = 'edit' | 'delete' | 'approve' | 'reject';
 
-export async function gotoLastPaginationPage(page: Page) {
+export async function gotoLastPaginationPage(
+    page: Page,
+    paginationPattern: RegExp = /^[0-9]+$/
+) {
     const paginationItems = page
         .getByRole('listitem')
-        .filter({ hasText: PATTERNS.pagination });
+        .filter({ hasText: paginationPattern });
 
     if (await paginationItems.count()) {
         await paginationItems.last().click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(300);
     }
 }
 
@@ -26,6 +29,28 @@ export async function findTableRowByTexts(
 
     for (const text of texts) {
         rows = rows.filter({ hasText: text });
+    }
+
+    const isVisible = await rows.first().isVisible({ timeout: 2000 }).catch(() => false);
+
+    if (!isVisible) {
+        const prevPageItem = page.getByRole('listitem', { name: 'Previous Page' });
+        const isPrevPageVisible = await prevPageItem.isVisible().catch(() => false);
+
+        if (isPrevPageVisible) {
+            const prevButton = prevPageItem.getByRole('button', { name: 'left' });
+            const isPrevEnabled = await prevButton.isEnabled().catch(() => false);
+
+            if (isPrevEnabled) {
+                await prevButton.click();
+                await page.waitForTimeout(500);
+
+                rows = tableRows(page);
+                for (const text of texts) {
+                    rows = rows.filter({ hasText: text });
+                }
+            }
+        }
     }
 
     await expect(rows.first()).toBeVisible({ timeout: 15000 });
@@ -51,4 +76,11 @@ export async function clickRowAction(row: Locator, action: RowAction) {
     }
 
     throw new Error(`Could not find row action "${action}"`);
+}
+
+export async function expectEmptyState(
+    page: Page,
+    text: string = TEST_CONTENT.validationMessages.emptyState
+) {
+    await expect(page.getByText(text).nth(1)).toBeVisible();
 }

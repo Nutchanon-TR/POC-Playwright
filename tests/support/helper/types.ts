@@ -14,6 +14,7 @@ export type CorporateProfileData = {
 export type IncomingProfileData = {
     accountNo: string;
     remark: string;
+    updatedAccountNo?: string;
     updatedRemark?: string;
     updatedStatus?: 'Active' | 'Inactive';
 };
@@ -22,11 +23,13 @@ export type TestRunData = {
     timestamp: number;
     idSuffix: string;
     corporateProfiles: {
-        sftp: CorporateProfileData;
-        email: CorporateProfileData & {
+        sftpApproved: CorporateProfileData;
+        sftpRejected: CorporateProfileData;
+        emailApproved: CorporateProfileData & {
             updatedEnglishName: string;
             updatedRemark: string;
         };
+        emailRejected: CorporateProfileData;
     };
     incomingProfiles: {
         approved: IncomingProfileData;

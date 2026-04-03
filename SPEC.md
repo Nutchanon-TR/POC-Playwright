@@ -64,6 +64,26 @@ type PendingRequestOptions = {
 
 ใช้เป็น output ของ `buildTestRunData()` เพื่อสร้าง test data แบบ dynamic สำหรับทั้ง flow
 
+```ts
+type TestRunData = {
+  timestamp: number;
+  idSuffix: string;
+  corporateProfiles: {
+    sftpApproved: CorporateProfileData;
+    sftpRejected: CorporateProfileData;
+    emailApproved: CorporateProfileData & {
+      updatedEnglishName: string;
+      updatedRemark: string;
+    };
+    emailRejected: CorporateProfileData;
+  };
+  incomingProfiles: {
+    approved: IncomingProfileData;
+    rejected: IncomingProfileData;
+  };
+};
+```
+
 ## 3. Public Helper Functions
 
 ส่วนนี้คือ function ที่ถูก export และควรเรียกใช้จาก test ได้โดยตรง
@@ -90,8 +110,9 @@ type PendingRequestOptions = {
 await loginWithMicrosoft(page);
 
 await loginWithMicrosoft(page, {
-  username: CREDENTIALS.approver,
-  useAnotherAccount: true,
+  username: CREDENTIALS.approver.username,
+  password: CREDENTIALS.approver.password,
+  
 });
 ```
 
@@ -122,12 +143,13 @@ await signOut(page);
 - หมายเหตุ:
   - ถ้าไม่ส่งค่า จะใช้ `Date.now()`
   - สร้างทั้งข้อมูล `Corporate Profile` และ `Incoming Profile`
+  - ฝั่ง `Corporate Profile` แยก data เป็น `sftpApproved`, `sftpRejected`, `emailApproved`, `emailRejected`
   - มีข้อมูลสำหรับทั้ง create และ update อยู่ใน object เดียว
 
 ```ts
 const runData = buildTestRunData();
 
-await createEmailCorporateProfile(page, runData.corporateProfiles.email);
+await createEmailCorporateProfile(page, runData.corporateProfiles.emailApproved);
 await createIncomingProfile(page, runData.incomingProfiles.approved);
 ```
 
@@ -135,15 +157,17 @@ await createIncomingProfile(page, runData.incomingProfiles.approved);
 
 #### `closeSuccessDialog(page)`
 
-- หน้าที่: ปิด success dialog ถ้ามี dialog โผล่ขึ้นมาหลัง submit/save
+- หน้าที่: ปิด Ant Design success modal dialog ที่มี title "Request Submitted!" หลัง submit/save
 - รับค่า:
   - `page`: Playwright `Page`
 - ใช้เมื่อ:
   - หลัง create
   - หลัง edit
-  - หลัง action ที่ระบบแสดง dialog พร้อมปุ่ม `OK`
+  - หลัง action ที่ระบบแสดง modal.success dialog พร้อมปุ่ม `OK`
 - หมายเหตุ:
-  - ถ้า dialog ไม่ขึ้น function จะไม่ throw และจะจบแบบเงียบ ๆ
+  - ใช้ `getByRole('dialog').filter({ hasText: 'Request Submitted!' })` เพื่อหลีกเลี่ยง strict mode violation
+  - จะพยายามกดปุ่ม "Yes" ก่อน (ถ้ามี) แล้วจึงรอ dialog และกด OK
+  - Dialog บางตัวอาจมี "Request Submitted!" ปรากฏใน `<div>` และ `<span>` ทำให้เกิด strict mode error ถ้าใช้ `getByText()` โดยตรง
 
 ```ts
 await closeSuccessDialog(page);
@@ -151,7 +175,7 @@ await closeSuccessDialog(page);
 
 #### `confirmVisibleDialog(page, buttonPattern, remark?)`
 
-- หน้าที่: กดยืนยัน dialog ที่เปิดอยู่ และกรอก remark ให้ถ้ามี
+- หน้าที่: กดยืนยัน dialog ถ้ามี หรือ skip ไปถ้าไม่มี dialog (เช่น approve/reject ที่แสดง notification toast แทน dialog)
 - รับค่า:
   - `page`: Playwright `Page`
   - `buttonPattern`: `RegExp` สำหรับปุ่มยืนยัน เช่น approve, reject, save, submit, delete
@@ -159,11 +183,11 @@ await closeSuccessDialog(page);
 - ใช้เมื่อ:
   - ตอน save
   - ตอน submit
-  - ตอน approve/reject
+  - ตอน approve/reject (แต่บาง action ไม่มี dialog ก็จะ skip ไป)
   - ตอน delete
 - หมายเหตุ:
-  - ถ้า dialog ยังไม่เปิด function จะ return ทันที
-  - ถ้าส่ง `remark` มา helper จะพยายามกรอกลง textbox ตัวแรกใน dialog
+  - ใช้ `try-catch` และ `waitFor()` timeout 3 วินาที - ถ้า dialog ไม่ขึ้นภายในเวลานั้นจะ return ทันที
+  - เหมาะกับ flow ที่บางครั้งมี dialog บางครั้งไม่มี (เช่น approve ที่แสดงแค่ notification toast)
 
 ```ts
 await confirmVisibleDialog(page, PATTERNS.confirmSave);
@@ -291,8 +315,8 @@ await expect(rows.first()).toBeVisible();
 
 ```ts
 const row = await findTableRowByTexts(page, [
-  runData.corporateProfiles.email.corporateId,
-  runData.corporateProfiles.email.updatedRemark,
+  runData.corporateProfiles.emailApproved.corporateId,
+  runData.corporateProfiles.emailApproved.updatedRemark,
 ]);
 ```
 
@@ -328,7 +352,7 @@ await clickRowAction(row, 'edit');
   - ใช้เฉพาะ field พื้นฐานของ corporate profile
 
 ```ts
-await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
+await createSftpCorporateProfile(page, runData.corporateProfiles.sftpApproved);
 ```
 
 #### `createEmailCorporateProfile(page, profile)`
@@ -346,7 +370,7 @@ await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
   - helper จะ check `Round 1 (09.00)` ให้
 
 ```ts
-await createEmailCorporateProfile(page, runData.corporateProfiles.email);
+await createEmailCorporateProfile(page, runData.corporateProfiles.emailApproved);
 ```
 
 #### `searchCorporateProfile(page, corporateId)`
@@ -361,7 +385,7 @@ await createEmailCorporateProfile(page, runData.corporateProfiles.email);
   - ก่อน verify row
 
 ```ts
-await searchCorporateProfile(page, runData.corporateProfiles.email.corporateId);
+await searchCorporateProfile(page, runData.corporateProfiles.emailApproved.corporateId);
 ```
 
 #### `editCorporateProfile(page, options)`
@@ -380,14 +404,14 @@ await searchCorporateProfile(page, runData.corporateProfiles.email.corporateId);
 
 ```ts
 await editCorporateProfile(page, {
-  corporateId: runData.corporateProfiles.email.corporateId,
+  corporateId: runData.corporateProfiles.emailApproved.corporateId,
   rowTexts: [
-    runData.corporateProfiles.email.corporateId,
-    runData.corporateProfiles.email.englishName,
-    runData.corporateProfiles.email.remark,
+    runData.corporateProfiles.emailApproved.corporateId,
+    runData.corporateProfiles.emailApproved.englishName,
+    runData.corporateProfiles.emailApproved.remark,
   ],
-  englishName: runData.corporateProfiles.email.updatedEnglishName,
-  remark: runData.corporateProfiles.email.updatedRemark,
+  englishName: runData.corporateProfiles.emailApproved.updatedEnglishName,
+  remark: runData.corporateProfiles.emailApproved.updatedRemark,
 });
 ```
 
@@ -406,10 +430,10 @@ await editCorporateProfile(page, {
 
 ```ts
 await deleteCorporateProfile(page, {
-  corporateId: runData.corporateProfiles.email.corporateId,
+  corporateId: runData.corporateProfiles.emailApproved.corporateId,
   rowTexts: [
-    runData.corporateProfiles.email.corporateId,
-    runData.corporateProfiles.email.updatedRemark,
+    runData.corporateProfiles.emailApproved.corporateId,
+    runData.corporateProfiles.emailApproved.updatedRemark,
   ],
 });
 ```
@@ -495,7 +519,7 @@ await deleteIncomingProfile(page, {
 
 #### `actOnPendingRequest(page, options)`
 
-- หน้าที่: เปิด `Pending Requests`, ไปหน้าท้ายสุด, หา row เป้าหมาย แล้วกด approve หรือ reject พร้อม confirm dialog
+- หน้าที่: เปิด `Pending Requests`, ไปหน้าท้ายสุด, หา row เป้าหมาย แล้วกด approve หรือ reject
 - รับค่า:
   - `page`: Playwright `Page`
   - `options.tab`: `'Corporate' | 'Incoming'`
@@ -505,19 +529,20 @@ await deleteIncomingProfile(page, {
 - ใช้เมื่อ:
   - approver ต้องจัดการ create/update/delete request
 - หมายเหตุ:
-  - helper จะพยายามกด action จากใน row ก่อน
-  - ถ้าไม่เจอ จะ fallback ไปคลิก row แล้วหา button จากหน้า
+  - action link อยู่ใน Actions column ของแต่ละ row (ใช้ `getByRole('link')` เพราะเป็น `<a>` tag ไม่ใช่ `<button>`)
+  - ต้อง scope locator ให้อยู่ใน row เดียวกันเพื่อหลีกเลี่ยง strict mode violation
+  - หลังกด approve/reject จะแสดง notification toast (ไม่ใช่ modal dialog) ดังนั้นใช้ `waitForLoadState('networkidle')` แทนการปิด dialog
   - ถ้า `action` เป็น `reject` ควรส่ง `remark`
 
 ```ts
-await actOnPendingRequest(page, {
-  tab: 'Corporate',
-  texts: [
-    runData.corporateProfiles.email.corporateId,
-    runData.corporateProfiles.email.remark,
-  ],
-  action: 'approve',
-});
+  await actOnPendingRequest(page, {
+    tab: 'Corporate',
+    texts: [
+      runData.corporateProfiles.emailApproved.corporateId,
+      runData.corporateProfiles.emailApproved.remark,
+    ],
+    action: 'approve',
+  });
 
 await actOnPendingRequest(page, {
   tab: 'Incoming',
@@ -539,6 +564,8 @@ await actOnPendingRequest(page, {
 - ถูกใช้โดย:
   - `createSftpCorporateProfile()`
   - `createEmailCorporateProfile()`
+  - `openSftpCreateForm()`
+  - `openEmailCreateForm()`
 
 #### `fillCorporateProfileBaseFields(page, profile)`
 
@@ -550,13 +577,69 @@ await actOnPendingRequest(page, {
 - ถูกใช้โดย:
   - `createSftpCorporateProfile()`
   - `createEmailCorporateProfile()`
+  - `openSftpCreateForm()`
+  - `openEmailCreateForm()`
 
-#### `submitCorporateProfile(page)`
+#### `openSftpCreateForm(page, profile)`
 
-- หน้าที่: ตรวจว่าปุ่ม submit ใช้งานได้ แล้วกด submit
+- หน้าที่: เปิด form สร้าง Corporate Profile แบบ SFTP พร้อม workaround Ant Design change detection (click Email ก่อน แล้วค่อย click กลับ SFTP)
+- รับค่า:
+  - `page`: Playwright `Page`
+  - `profile`: `CorporateProfileData`
+- ถูกใช้โดย:
+  - `tests/flow/corporate-profile/create-flow.ts` (duplicate blocking check)
+
+#### `openEmailCreateForm(page, profile, emailOptions?)`
+
+- หน้าที่: เปิด form สร้าง Corporate Profile แบบ Email พร้อมกรอก base fields, เลือก send type, และ fill email fields
+- รับค่า:
+  - `page`: Playwright `Page`
+  - `profile`: `Pick<CorporateProfileData, 'corporateId' | 'thaiName' | 'englishName' | 'remark'>`
+  - `emailOptions.taxId?`: string
+  - `emailOptions.emails?`: string[]
+  - `emailOptions.checkRound1?`: boolean
+- ถูกใช้โดย:
+  - `tests/flow/corporate-profile/create-flow.ts` (validation guards, duplicate blocking)
+
+#### `submitCorporateCreateForm(page, logPrefix, options?)`
+
+- หน้าที่: submit create form พร้อม retry logic สำหรับ 429 — ถ้า submit button disabled จะ dispatch submit event โดยตรงแทน
+- รับค่า:
+  - `page`: Playwright `Page`
+  - `logPrefix`: string สำหรับ log
+  - `options.force?`: boolean — ถ้า true จะ click { force: true }
+  - `options.settleDelayMs?`: เวลารอหลัง submit
+  - `options.onRetry?`: callback reset state ก่อน retry
+- ถูกใช้โดย:
+  - `tests/flow/corporate-profile/create-flow.ts`
+
+#### `closeNotificationAndClearForm(page)`
+
+- หน้าที่: ปิด notification toast (ถ้ามี) แล้วกดปุ่ม Clear เพื่อ reset form
+- รับค่า:
+  - `page`: Playwright `Page`
+- ถูกใช้โดย:
+  - `tests/flow/corporate-profile/create-flow.ts` (หลัง duplicate blocking check)
+
+### `common/core/http-retry.helper.ts`
+
+#### `submitWithRetryOn429(page, submitAction, options?)`
+
+- หน้าที่: retry การ submit หรือ action ที่สร้าง request เมื่อ backend ตอบ `429 Too Many Requests`
+- รับค่า:
+  - `page`: Playwright `Page`
+  - `submitAction`: function ที่ trigger submit
+  - `options.maxRetries?`: จำนวนรอบ retry
+  - `options.retryDelayMs?`: เวลารอก่อน retry รอบถัดไป
+  - `options.settleDelayMs?`: เวลารอให้ response นิ่งก่อนตัดสินใจ retry
+  - `options.responseUrlIncludes?`: path ที่ใช้ filter response 429
+  - `options.logPrefix?`: prefix สำหรับ log แต่ละรอบ
+  - `options.onRetry?`: callback สำหรับ reset state ก่อน retry
 - ถูกใช้โดย:
   - `createSftpCorporateProfile()`
   - `createEmailCorporateProfile()`
+  - `createIncomingProfile()`
+  - `submitCorporateCreateForm()`
 
 ### `incoming-profile.helper.ts`
 
@@ -578,33 +661,86 @@ await actOnPendingRequest(page, {
 - ถูกใช้โดย:
   - `createIncomingProfile()`
 
-## 5. Helper ที่ใช้บ่อยใน flow จริง
+## 5. โครงสร้าง Test Files
 
-ตัวอย่างลำดับการใช้ helper แบบเดียวกับ test หลัก
+```
+tests/
+  corporate-profile.spec.ts        ← thin orchestrator
+  incoming-profile.spec.ts         ← thin orchestrator
+
+  flow/
+    corporate-profile/
+      create-flow.ts               ← test('Create') + test.step 1–4
+      edit-flow.ts                 ← test('Edit') + test.step 1–3
+      delete-flow.ts               ← test('Delete') + test.step 1–4
+    incoming-profile/
+      create-flow.ts               ← test('Create') + test.step 1–2
+      edit-flow.ts                 ← test('Edit') + test.step 1–3
+      delete-flow.ts               ← test('Delete') + test.step 1–4
+
+  support/
+    constant/                      ← CREDENTIALS, PATTERNS, TEST_CONTENT, UI_TEXT, URLS
+    helper/
+      index.ts                     ← barrel re-export ทั้งหมด
+      types.ts                     ← CorporateProfileData, IncomingProfileData, TestRunData
+      common/core/                 ← auth, data, http-retry
+      common/ui/                   ← dialog, form, navigation, table
+      corporate-report/            ← corporate-profile, incoming-profile, pending-request, data.factory
+```
+
+### Pattern: Describe Factory
+
+flow files ไม่ใช่ `.spec.ts` จึงไม่ถูก Playwright pick up โดยตรง — แต่ละไฟล์ export function ที่ register `test()` ไว้ข้างใน
 
 ```ts
-const runData = buildTestRunData();
+// spec file (orchestrator)
+test.describe.serial('Corporate Profile', () => {
+  let runData: TestRunData;
 
-await loginWithMicrosoft(page);
-await createSftpCorporateProfile(page, runData.corporateProfiles.sftp);
-await createEmailCorporateProfile(page, runData.corporateProfiles.email);
-await createIncomingProfile(page, runData.incomingProfiles.approved);
-await signOut(page);
+  test.beforeAll(() => {
+    runData = buildTestRunData();
+  });
 
-await loginWithMicrosoft(page, {
-  username: CREDENTIALS.approver,
-  useAnotherAccount: true,
+  const ctx = { runData: () => runData };
+
+  corporateCreateFlow(ctx);
+  corporateEditFlow(ctx);
+  corporateDeleteFlow(ctx);
 });
 
-await actOnPendingRequest(page, {
-  tab: 'Corporate',
-  texts: [
-    runData.corporateProfiles.email.corporateId,
-    runData.corporateProfiles.email.remark,
-  ],
-  action: 'approve',
-});
+// flow file
+export function corporateEditFlow(ctx: { runData: () => TestRunData }) {
+  test('Edit', async ({ page }) => {
+    test.setTimeout(600000);
+
+    await test.step('1. Maker validates edit guards and submits update', async () => { ... });
+    await test.step('2. Maker verifies duplicate edit is blocked', async () => { ... });
+    await test.step('3. Approver approves update', async () => { ... });
+  });
+}
 ```
+
+### Test Steps ต่อ Group
+
+| Group | Steps |
+|-------|-------|
+| Corporate > Create | 1. Maker validates security & form guards<br>2. Maker creates SFTP & Email profiles<br>3. Maker verifies duplicate blocking<br>4. Approver approves and rejects create requests |
+| Corporate > Edit | 1. Maker validates edit guards and submits update<br>2. Maker verifies duplicate edit is blocked<br>3. Approver approves update |
+| Corporate > Delete | 1. Maker verifies update and submits delete<br>2. Maker verifies duplicate delete is blocked<br>3. Approver approves delete<br>4. Maker confirms deleted |
+| Incoming > Create | 1. Maker validates form guards, creates profiles, verifies duplicate<br>2. Approver approves and rejects create requests |
+| Incoming > Edit | 1. Maker validates edit guards and submits update<br>2. Maker verifies duplicate edit is blocked<br>3. Approver approves update |
+| Incoming > Delete | 1. Maker verifies update and submits delete<br>2. Maker verifies duplicate delete is blocked<br>3. Approver approves delete<br>4. Maker confirms deleted |
+
+### Business Rule: Duplicate Pending Request
+
+ถ้ามี pending request ของ profile นั้นอยู่แล้ว (ยังไม่ถูก approve/reject) ระบบจะไม่อนุญาตให้ส่ง create/edit/delete ซ้ำ — จะแสดง notification:
+
+```
+TEST_CONTENT.notifications.duplicatePendingRequest
+= 'There is a pending request for this profile.'
+```
+
+ครอบคลุมใน step "duplicate blocking" ของทุก group
 
 ## 6. สรุปแนวทางใช้งาน
 
@@ -616,3 +752,66 @@ await actOnPendingRequest(page, {
 - ถ้าต้องการหา row หรือกด action ในตาราง ใช้ helper ใน `table.helper.ts`
 - ถ้าต้องการเปิดหน้าตามเมนู ใช้ helper ใน `navigation.helper.ts`
 - ถ้าต้องการจัดการ dialog ใช้ helper ใน `dialog.helper.ts`
+
+## 7. Technical Notes & Bug Fixes
+
+### 7.1 Form Validation และ Submit Button
+
+**ปัญหา:** ปุ่ม Submit ใน Corporate Profile creation form ยังคง disabled อยู่แม้จะกรอกฟอร์มครบแล้ว
+
+**สาเหตุ:**
+- Ant Design form ใช้ `disabled={loading || !submittable}` โดย `submittable` จะเป็น true ก็ต่อเมื่อฟอร์มมีการเปลี่ยนแปลงและ validate ผ่าน
+- การใช้ `Promise.all()` เพื่อ fill หลาย field พร้อมกันอาจทำให้ form change detection ไม่ทำงาน
+- การไม่ได้คลิก radio button (SFTP/Email) อย่างชัดเจนทำให้ form ไม่ detect การเปลี่ยนแปลง
+
+**วิธีแก้:**
+1. เปลี่ยนจาก parallel fill (`Promise.all`) เป็น sequential fill
+2. คลิก radio button (SFTP หรือ Email) อย่างชัดเจนเพื่อ trigger form validation
+3. รอให้ submit button เป็น enabled ด้วย `toBeEnabled({ timeout: 10000 })`
+
+```ts
+// ❌ ก่อนแก้ - parallel fill
+await Promise.all([
+  page.getByRole('textbox', { name: 'Corporate ID' }).fill(id),
+  page.getByRole('textbox', { name: 'Thai Name' }).fill(thai),
+]);
+
+// ✅ หลังแก้ - sequential fill + explicit radio click
+await page.getByRole('textbox', { name: 'Corporate ID' }).fill(id);
+await page.getByRole('textbox', { name: 'Thai Name' }).fill(thai);
+await page.locator('label').filter({ hasText: /sFTP/i }).click();
+await expect(submitButton).toBeEnabled({ timeout: 10000 });
+```
+
+### 7.2 Strict Mode Violations
+
+**ปัญหา:** Playwright ขึ้น error "strict mode violation: ... resolved to 2 elements"
+
+**กรณีที่พบ:**
+1. `getByText('Request Submitted!')` match ทั้ง `<div>` และ `<span>` ใน Ant Design modal
+2. `getByRole('button', { name: 'Approve' })` เมื่อมีหลาย row ที่มีปุ่ม Approve
+
+**วิธีแก้:**
+1. ใช้ `getByRole('dialog').filter({ hasText: '...' })` สำหรับ modal
+2. Scope locator ลงไปที่ row level: `row.getByRole('link', { name: /approve/i })`
+
+```ts
+// ❌ Strict mode violation
+await page.getByText('Request Submitted!').waitFor();
+
+// ✅ ใช้ role + filter
+const dialog = page.getByRole('dialog').filter({ hasText: 'Request Submitted!' });
+await dialog.waitFor({ state: 'visible' });
+```
+
+### 7.3 Modal vs Notification Toast
+
+**ปัญหา:** สับสนระหว่าง `modal.success` dialog และ `notification.success` toast
+
+**คำอธิบาย:**
+- **`modal.success`**: แสดง dialog ที่ต้องกด OK เพื่อปิด (ใช้ใน create/edit flow)
+- **`notification.success`**: แสดง toast ที่หายไปเองโดยอัตโนมัติ (ใช้ใน approve/reject flow)
+
+**วิธีแก้:**
+- Create/Edit: รอ URL navigation แล้วใช้ `closeSuccessDialog()`
+- Approve/Reject: ใช้ `waitForLoadState('networkidle')` แทนการปิด dialog

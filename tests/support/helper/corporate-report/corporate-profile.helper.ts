@@ -1,37 +1,100 @@
 import { expect, type Page } from '@playwright/test';
 import { PATTERNS, SELECTORS, UI_TEXT, URLS } from '../../constant';
-import { closeSuccessDialog, confirmVisibleDialog } from '../common/dialog.helper';
-import { selectAutocompleteOption } from '../common/form.helper';
-import { openCorporateProfiles } from '../common/navigation.helper';
-import { clickRowAction, findTableRowByTexts } from '../common/table.helper';
+import { submitWithRetryOn429 } from '../common/core/http-retry.helper';
+import { closeSuccessDialog, confirmVisibleDialog } from '../common/ui/dialog.helper';
+import { selectAutocompleteOption } from '../common/ui/form.helper';
+import { openCorporateProfiles } from '../common/ui/navigation.helper';
+import { clickRowAction, findTableRowByTexts } from '../common/ui/table.helper';
 import type { CorporateProfileData } from '../types';
 
-async function openCorporateProfileAddForm(page: Page) {
+const PORTAL_ORIGIN = URLS.login.replace(/\/login$/, '');
+
+export async function openCorporateProfileAddForm(page: Page) {
     await openCorporateProfiles(page);
-    await page.getByRole('button', { name: UI_TEXT.buttons.addNew }).click();
+    const addNewButton = page.getByRole('button', { name: UI_TEXT.buttons.addNew });
+    await expect(addNewButton).toBeVisible();
+    await addNewButton.click();
     await expect(
         page.getByRole('heading', { name: UI_TEXT.headings.corporateProfileDetails })
     ).toBeVisible();
 }
 
-async function fillCorporateProfileBaseFields(
+export async function fillCorporateProfileBaseFields(
     page: Page,
-    profile: CorporateProfileData
+    profile: Pick<CorporateProfileData, 'corporateId' | 'thaiName' | 'englishName' | 'remark'>
 ) {
     await page.getByRole('textbox', { name: UI_TEXT.fields.corporateId }).fill(profile.corporateId);
-    await page
-        .getByRole('textbox', { name: UI_TEXT.fields.corporateNameThai })
-        .fill(profile.thaiName);
-    await page
-        .getByRole('textbox', { name: UI_TEXT.fields.corporateNameEnglish })
-        .fill(profile.englishName);
+    await page.getByRole('textbox', { name: UI_TEXT.fields.corporateNameThai }).fill(profile.thaiName);
+    await page.getByRole('textbox', { name: UI_TEXT.fields.corporateNameEnglish }).fill(profile.englishName);
     await page.getByRole('textbox', { name: UI_TEXT.fields.remark }).fill(profile.remark);
 }
 
-async function submitCorporateProfile(page: Page) {
-    const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
-    await expect(submitButton).toBeEnabled();
-    await submitButton.click();
+export async function selectCorporateSendType(
+    page: Page,
+    sendType: CorporateProfileData['sendType']
+) {
+    if (sendType === 'Email') {
+        await page.locator('label').filter({ hasText: UI_TEXT.sendType.email }).click();
+        return;
+    }
+
+    await page.locator('label').filter({ hasText: /sFTP/i }).click();
+}
+
+export async function addCorporateEmails(page: Page, emails: string[]) {
+    const emailInput = page.locator(SELECTORS.emailListInput);
+
+    for (const email of emails) {
+        await emailInput.fill(email);
+        await emailInput.press('Enter');
+        await page.waitForTimeout(500); // Wait for email to be added to the list
+        // Verify email appears as a tag (EmailListFormItem uses ant-tag class)
+        await expect(page.locator('.ant-tag').filter({ hasText: email }).first()).toBeVisible({ timeout: 3000 });
+    }
+}
+
+export async function removeCorporateEmail(page: Page, email: string) {
+    const tag = page.locator('.ant-tag').filter({ hasText: email }).first();
+    await expect(tag).toBeVisible();
+
+    const removeButton = tag.locator('.anticon-close').first();
+    if (await removeButton.count()) {
+        await removeButton.click();
+    } else {
+        const emailInput = page.locator(SELECTORS.emailListInput);
+        await emailInput.click();
+        await emailInput.press('Backspace');
+    }
+
+    await expect(page.locator('.ant-tag').filter({ hasText: email })).toHaveCount(0);
+}
+
+export async function fillCorporateEmailFields(
+    page: Page,
+    options: {
+        taxId?: string;
+        emails?: string[];
+        checkRound1?: boolean;
+    }
+) {
+    if (options.taxId !== undefined) {
+        await page.getByPlaceholder(UI_TEXT.placeholders.taxId).fill(options.taxId);
+    }
+
+    if (options.emails?.length) {
+        await addCorporateEmails(page, options.emails);
+    }
+
+    if (options.checkRound1) {
+        await page.getByRole('checkbox', { name: UI_TEXT.emailRound.round1 }).check();
+    }
+}
+
+export async function openCorporateProfilesWithSearch(page: Page, corporateId: string) {
+    await page.goto(
+        `${PORTAL_ORIGIN}/corporate-report/corporate-profiles?corporateId=${encodeURIComponent(corporateId)}&page=1&pageSize=10`
+    );
+    await page.waitForSelector('table', { state: 'visible', timeout: 15000 });
 }
 
 export async function createSftpCorporateProfile(
@@ -39,8 +102,17 @@ export async function createSftpCorporateProfile(
     profile: CorporateProfileData
 ) {
     await openCorporateProfileAddForm(page);
+
+    // WORKAROUND: Click Email first to trigger change detection, then click SFTP
+    // This is needed because SFTP is default, so direct click doesn't trigger form state change
+    await page.locator('label').filter({ hasText: UI_TEXT.sendType.email }).click();
+    await page.waitForTimeout(200);
+
+    await selectCorporateSendType(page, profile.sendType);
     await fillCorporateProfileBaseFields(page, profile);
-    await submitCorporateProfile(page);
+
+    await submitWithRetryOn429(page);
+
     await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
 }
@@ -50,32 +122,35 @@ export async function createEmailCorporateProfile(
     profile: CorporateProfileData
 ) {
     await openCorporateProfileAddForm(page);
+    await selectCorporateSendType(page, profile.sendType);
     await fillCorporateProfileBaseFields(page, profile);
+    await fillCorporateEmailFields(page, {
+        taxId: profile.taxId,
+        emails: profile.emails,
+        checkRound1: true,
+    });
 
-    await page.locator('label').filter({ hasText: UI_TEXT.sendType.email }).click();
+    await submitWithRetryOn429(page);
 
-
-    if (profile.taxId) {
-        await page.getByPlaceholder(UI_TEXT.placeholders.taxId).fill(profile.taxId);
-    }
-
-    for (const email of profile.emails ?? []) {
-        await page.locator(SELECTORS.emailListInput).fill(email);
-        await page.locator(SELECTORS.emailListInput).press('Enter');
-    }
-
-    await page
-        .getByRole('checkbox', { name: UI_TEXT.emailRound.round1 })
-        .check();
-
-    await submitCorporateProfile(page);
+    await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
 }
 
 export async function searchCorporateProfile(page: Page, corporateId: string) {
     await openCorporateProfiles(page);
-    await selectAutocompleteOption(page, UI_TEXT.fields.searchCorporateId, corporateId);
+    await selectAutocompleteOption(
+        page,
+        UI_TEXT.fields.searchCorporateId,
+        corporateId,
+        SELECTORS.antSelectVisibleOptions
+    );
+
+    const field = page.getByRole('combobox', { name: UI_TEXT.fields.searchCorporateId });
+    await expect(field).toHaveValue(corporateId);
+
     await page.getByRole('button', { name: UI_TEXT.buttons.search }).click();
+    await page.waitForSelector('table', { state: 'visible', timeout: 10000 });
+    await page.waitForTimeout(500);
 }
 
 export async function editCorporateProfile(
@@ -88,6 +163,8 @@ export async function editCorporateProfile(
     }
 ) {
     await searchCorporateProfile(page, options.corporateId);
+    await page.waitForSelector('table', { state: 'visible', timeout: 10000 });
+
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'edit');
 
@@ -98,8 +175,7 @@ export async function editCorporateProfile(
         .getByRole('textbox', { name: UI_TEXT.fields.corporateNameEnglish })
         .fill(options.englishName);
     await page.getByRole('textbox', { name: UI_TEXT.fields.remark }).fill(options.remark);
-    await page.getByRole('button', { name: UI_TEXT.buttons.save }).click();
-    await confirmVisibleDialog(page, PATTERNS.confirmSave);
+    await submitWithRetryOn429(page, 'edit');
     await closeSuccessDialog(page);
 }
 
@@ -113,6 +189,48 @@ export async function deleteCorporateProfile(
     await searchCorporateProfile(page, options.corporateId);
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'delete');
+
+    await page.getByRole('button', { name: 'Yes' }).click();
     await confirmVisibleDialog(page, PATTERNS.confirmDelete);
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
+}
+
+export async function openSftpCreateForm(page: Page, profile: CorporateProfileData) {
+    await openCorporateProfileAddForm(page);
+    // SFTP is already selected by default, so we switch away and back to trigger Ant Design change detection.
+    await page.locator('label').filter({ hasText: UI_TEXT.sendType.email }).click();
+    await page.waitForTimeout(200);
+    await selectCorporateSendType(page, profile.sendType);
+    await fillCorporateProfileBaseFields(page, profile);
+}
+
+export async function openEmailCreateForm(
+    page: Page,
+    profile: Pick<CorporateProfileData, 'corporateId' | 'thaiName' | 'englishName' | 'remark'>,
+    emailOptions: {
+        taxId?: string;
+        emails?: string[];
+        checkRound1?: boolean;
+    } = {}
+) {
+    await openCorporateProfileAddForm(page);
+    await fillCorporateProfileBaseFields(page, profile);
+    await selectCorporateSendType(page, 'Email');
+    await fillCorporateEmailFields(page, emailOptions);
+}
+
+export async function submitCorporateCreateForm(page: Page): Promise<void> {
+    await submitWithRetryOn429(page);
+}
+
+export async function closeNotificationAndClearForm(page: Page) {
+    const closeButton = page.getByLabel('Close', { exact: true }).first();
+    const hasCloseButton = await closeButton.isVisible({ timeout: 1000 }).catch(() => false);
+
+    if (hasCloseButton) {
+        await closeButton.click();
+        await page.waitForTimeout(500);
+    }
+
+    await page.getByRole('button', { name: /Clear/i }).click();
 }
