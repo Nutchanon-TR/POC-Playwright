@@ -2,12 +2,16 @@ import { expect, test } from '@playwright/test';
 import {
     CREDENTIALS,
     PATTERNS,
+    TEST_CONTENT,
     UI_TEXT,
 } from '../../support/constant';
 import {
     actOnPendingRequest,
+    clickRowAction,
+    confirmVisibleDialog,
     deleteCorporateProfile,
     expectEmptyState,
+    expectNotificationMessage,
     findTableRowByTexts,
     loginWithMicrosoft,
     openCorporateProfilesWithSearch,
@@ -48,7 +52,30 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await page.waitForTimeout(3000);
         });
 
-        await test.step('2. Approver approves delete', async () => {
+        await test.step('2. Maker verifies duplicate delete is blocked', async () => {
+            const { emailApproved } = ctx.runData().corporateProfiles;
+
+            await loginWithMicrosoft(page, {
+                username: CREDENTIALS.creator.username,
+                password: CREDENTIALS.creator.password,
+                useAnotherAccount: true,
+            });
+
+            await searchCorporateProfile(page, emailApproved.corporateId);
+            const row = await findTableRowByTexts(page, [
+                emailApproved.corporateId,
+                emailApproved.updatedRemark,
+            ]);
+            await clickRowAction(row, 'delete');
+            await page.getByRole('button', { name: 'Yes' }).click();
+            await confirmVisibleDialog(page, PATTERNS.confirmDelete);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
+
+            await signOut(page);
+            await page.waitForTimeout(3000);
+        });
+
+        await test.step('3. Approver approves delete', async () => {
             const { emailApproved } = ctx.runData().corporateProfiles;
 
             await page.waitForLoadState('networkidle');
@@ -68,7 +95,7 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await page.waitForTimeout(3000);
         });
 
-        await test.step('3. Maker confirms deleted', async () => {
+        await test.step('4. Maker confirms deleted', async () => {
             const { emailApproved } = ctx.runData().corporateProfiles;
 
             await page.waitForLoadState('networkidle');

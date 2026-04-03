@@ -7,8 +7,11 @@ import {
 } from '../../support/constant';
 import {
     actOnPendingRequest,
+    clickRowAction,
+    confirmVisibleDialog,
     deleteIncomingProfile,
     expectEmptyState,
+    expectNotificationMessage,
     findTableRowByTexts,
     formatIncomingAccountPattern,
     loginWithMicrosoft,
@@ -53,7 +56,29 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        await test.step('2. Approver approves delete', async () => {
+        await test.step('2. Maker verifies duplicate delete is blocked', async () => {
+            const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
+
+            await loginWithMicrosoft(page, {
+                username: CREDENTIALS.creator.username,
+                password: CREDENTIALS.creator.password,
+                useAnotherAccount: true,
+            });
+
+            await searchIncomingProfile(page, approvedIncoming.updatedAccountNo || approvedIncoming.accountNo);
+            const row = await findTableRowByTexts(page, [
+                approvedIncoming.updatedRemark ?? TEST_CONTENT.remarks.incomingUpdated,
+                approvedIncoming.updatedStatus ?? UI_TEXT.status.inactive,
+            ]);
+            await clickRowAction(row, 'delete');
+            await page.getByRole('button', { name: 'Yes' }).click();
+            await confirmVisibleDialog(page, PATTERNS.confirmDelete);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
+
+            await signOut(page);
+        });
+
+        await test.step('3. Approver approves delete', async () => {
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
             await loginWithMicrosoft(page, {
@@ -75,7 +100,7 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        await test.step('3. Maker confirms deleted', async () => {
+        await test.step('4. Maker confirms deleted', async () => {
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
             await loginWithMicrosoft(page, {

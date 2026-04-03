@@ -10,6 +10,7 @@ import {
     clickRowAction,
     closeSuccessDialog,
     confirmVisibleDialog,
+    expectNotificationMessage,
     findTableRowByTexts,
     loginWithMicrosoft,
     searchCorporateProfile,
@@ -70,7 +71,34 @@ export function corporateEditFlow(ctx: { runData: () => TestRunData }) {
             await page.waitForTimeout(3000);
         });
 
-        await test.step('2. Approver approves update', async () => {
+        await test.step('2. Maker verifies duplicate edit is blocked', async () => {
+            const { emailApproved } = ctx.runData().corporateProfiles;
+
+            await loginWithMicrosoft(page, {
+                username: CREDENTIALS.creator.username,
+                password: CREDENTIALS.creator.password,
+                useAnotherAccount: true,
+            });
+
+            await searchCorporateProfile(page, emailApproved.corporateId);
+            const row = await findTableRowByTexts(page, [
+                emailApproved.corporateId,
+                emailApproved.englishName,
+                emailApproved.remark,
+            ]);
+            await clickRowAction(row, 'edit');
+
+            const remarkField = page.getByRole('textbox', { name: UI_TEXT.fields.remark });
+            await remarkField.fill('Duplicate edit attempt');
+            await page.getByRole('button', { name: UI_TEXT.buttons.save }).click();
+            await confirmVisibleDialog(page, PATTERNS.confirmSave);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
+
+            await signOut(page);
+            await page.waitForTimeout(3000);
+        });
+
+        await test.step('3. Approver approves update', async () => {
             const { emailApproved } = ctx.runData().corporateProfiles;
 
             await page.waitForLoadState('networkidle');

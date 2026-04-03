@@ -75,7 +75,7 @@ export function incomingCreateFlow(ctx: { runData: () => TestRunData }) {
                 remark: `${approvedIncoming.remark} duplicate`,
             });
             await page.getByRole('button', { name: UI_TEXT.buttons.submit }).click();
-            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicateIncomingProfile);
             await page.getByRole('button', { name: /Clear/i }).click();
 
             await createIncomingProfile(page, rejectedIncoming);

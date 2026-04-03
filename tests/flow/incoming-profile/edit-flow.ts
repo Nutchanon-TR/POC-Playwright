@@ -10,6 +10,7 @@ import {
     clickRowAction,
     closeSuccessDialog,
     confirmVisibleDialog,
+    expectNotificationMessage,
     findTableRowByTexts,
     formatIncomingAccountPattern,
     loginWithMicrosoft,
@@ -64,7 +65,29 @@ export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
             await signOut(page);
         });
 
-        await test.step('2. Approver approves update', async () => {
+        await test.step('2. Maker verifies duplicate edit is blocked', async () => {
+            const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
+
+            await loginWithMicrosoft(page, {
+                username: CREDENTIALS.creator.username,
+                password: CREDENTIALS.creator.password,
+                useAnotherAccount: true,
+            });
+
+            await searchIncomingProfile(page, approvedIncoming.accountNo);
+            const row = await findTableRowByTexts(page, [approvedIncoming.remark]);
+            await clickRowAction(row, 'edit');
+
+            const remarkField = page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark);
+            await remarkField.fill('Duplicate edit attempt');
+            await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
+            await confirmVisibleDialog(page, PATTERNS.confirmSubmit);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
+
+            await signOut(page);
+        });
+
+        await test.step('3. Approver approves update', async () => {
             const { approved: approvedIncoming } = ctx.runData().incomingProfiles;
 
             await loginWithMicrosoft(page, {

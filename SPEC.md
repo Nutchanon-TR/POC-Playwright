@@ -564,6 +564,8 @@ await actOnPendingRequest(page, {
 - ถูกใช้โดย:
   - `createSftpCorporateProfile()`
   - `createEmailCorporateProfile()`
+  - `openSftpCreateForm()`
+  - `openEmailCreateForm()`
 
 #### `fillCorporateProfileBaseFields(page, profile)`
 
@@ -575,6 +577,49 @@ await actOnPendingRequest(page, {
 - ถูกใช้โดย:
   - `createSftpCorporateProfile()`
   - `createEmailCorporateProfile()`
+  - `openSftpCreateForm()`
+  - `openEmailCreateForm()`
+
+#### `openSftpCreateForm(page, profile)`
+
+- หน้าที่: เปิด form สร้าง Corporate Profile แบบ SFTP พร้อม workaround Ant Design change detection (click Email ก่อน แล้วค่อย click กลับ SFTP)
+- รับค่า:
+  - `page`: Playwright `Page`
+  - `profile`: `CorporateProfileData`
+- ถูกใช้โดย:
+  - `tests/flow/corporate-profile/create-flow.ts` (duplicate blocking check)
+
+#### `openEmailCreateForm(page, profile, emailOptions?)`
+
+- หน้าที่: เปิด form สร้าง Corporate Profile แบบ Email พร้อมกรอก base fields, เลือก send type, และ fill email fields
+- รับค่า:
+  - `page`: Playwright `Page`
+  - `profile`: `Pick<CorporateProfileData, 'corporateId' | 'thaiName' | 'englishName' | 'remark'>`
+  - `emailOptions.taxId?`: string
+  - `emailOptions.emails?`: string[]
+  - `emailOptions.checkRound1?`: boolean
+- ถูกใช้โดย:
+  - `tests/flow/corporate-profile/create-flow.ts` (validation guards, duplicate blocking)
+
+#### `submitCorporateCreateForm(page, logPrefix, options?)`
+
+- หน้าที่: submit create form พร้อม retry logic สำหรับ 429 — ถ้า submit button disabled จะ dispatch submit event โดยตรงแทน
+- รับค่า:
+  - `page`: Playwright `Page`
+  - `logPrefix`: string สำหรับ log
+  - `options.force?`: boolean — ถ้า true จะ click { force: true }
+  - `options.settleDelayMs?`: เวลารอหลัง submit
+  - `options.onRetry?`: callback reset state ก่อน retry
+- ถูกใช้โดย:
+  - `tests/flow/corporate-profile/create-flow.ts`
+
+#### `closeNotificationAndClearForm(page)`
+
+- หน้าที่: ปิด notification toast (ถ้ามี) แล้วกดปุ่ม Clear เพื่อ reset form
+- รับค่า:
+  - `page`: Playwright `Page`
+- ถูกใช้โดย:
+  - `tests/flow/corporate-profile/create-flow.ts` (หลัง duplicate blocking check)
 
 ### `common/core/http-retry.helper.ts`
 
@@ -594,7 +639,7 @@ await actOnPendingRequest(page, {
   - `createSftpCorporateProfile()`
   - `createEmailCorporateProfile()`
   - `createIncomingProfile()`
-  - duplicate checks ใน `tests/corporate-profile.spec.ts`
+  - `submitCorporateCreateForm()`
 
 ### `incoming-profile.helper.ts`
 
@@ -616,43 +661,86 @@ await actOnPendingRequest(page, {
 - ถูกใช้โดย:
   - `createIncomingProfile()`
 
-## 5. Helper ที่ใช้บ่อยใน flow จริง
+## 5. โครงสร้าง Test Files
 
-ตัวอย่างลำดับการใช้ helper แบบเดียวกับ test หลัก ซึ่งปัจจุบันครอบด้วย `test.step` และใช้ `page` ตัวเดียวกันแบบรันต่อเนื่อง:
+```
+tests/
+  corporate-profile.spec.ts        ← thin orchestrator
+  incoming-profile.spec.ts         ← thin orchestrator
+
+  flow/
+    corporate-profile/
+      create-flow.ts               ← test('Create') + test.step 1–4
+      edit-flow.ts                 ← test('Edit') + test.step 1–3
+      delete-flow.ts               ← test('Delete') + test.step 1–4
+    incoming-profile/
+      create-flow.ts               ← test('Create') + test.step 1–2
+      edit-flow.ts                 ← test('Edit') + test.step 1–3
+      delete-flow.ts               ← test('Delete') + test.step 1–4
+
+  support/
+    constant/                      ← CREDENTIALS, PATTERNS, TEST_CONTENT, UI_TEXT, URLS
+    helper/
+      index.ts                     ← barrel re-export ทั้งหมด
+      types.ts                     ← CorporateProfileData, IncomingProfileData, TestRunData
+      common/core/                 ← auth, data, http-retry
+      common/ui/                   ← dialog, form, navigation, table
+      corporate-report/            ← corporate-profile, incoming-profile, pending-request, data.factory
+```
+
+### Pattern: Describe Factory
+
+flow files ไม่ใช่ `.spec.ts` จึงไม่ถูก Playwright pick up โดยตรง — แต่ละไฟล์ export function ที่ register `test()` ไว้ข้างใน
 
 ```ts
-test('Corporate Report flow', async ({ page }) => {
-  const runData = buildTestRunData();
+// spec file (orchestrator)
+test.describe.serial('Corporate Profile', () => {
+  let runData: TestRunData;
 
-  await test.step('Part 1: Creator creates profiles', async () => {
-    await loginWithMicrosoft(page);
-    await createSftpCorporateProfile(page, runData.corporateProfiles.sftpApproved);
-    await createSftpCorporateProfile(page, runData.corporateProfiles.sftpRejected);
-    await createEmailCorporateProfile(page, runData.corporateProfiles.emailApproved);
-    await createEmailCorporateProfile(page, runData.corporateProfiles.emailRejected);
-    await createIncomingProfile(page, runData.incomingProfiles.approved);
-    await signOut(page);
+  test.beforeAll(() => {
+    runData = buildTestRunData();
   });
 
-  await test.step('Part 2: Approver approves requests', async () => {
-    await loginWithMicrosoft(page, {
-      username: CREDENTIALS.approver.username,
-      password: CREDENTIALS.approver.password,
-      useAnotherAccount: true,
-    });
-    
-    await actOnPendingRequest(page, {
-      tab: 'Corporate',
-      texts: [
-        runData.corporateProfiles.emailApproved.corporateId,
-        runData.corporateProfiles.emailApproved.remark,
-      ],
-      action: 'approve',
-    });
-    await signOut(page);
-  });
+  const ctx = { runData: () => runData };
+
+  corporateCreateFlow(ctx);
+  corporateEditFlow(ctx);
+  corporateDeleteFlow(ctx);
 });
+
+// flow file
+export function corporateEditFlow(ctx: { runData: () => TestRunData }) {
+  test('Edit', async ({ page }) => {
+    test.setTimeout(600000);
+
+    await test.step('1. Maker validates edit guards and submits update', async () => { ... });
+    await test.step('2. Maker verifies duplicate edit is blocked', async () => { ... });
+    await test.step('3. Approver approves update', async () => { ... });
+  });
+}
 ```
+
+### Test Steps ต่อ Group
+
+| Group | Steps |
+|-------|-------|
+| Corporate > Create | 1. Maker validates security & form guards<br>2. Maker creates SFTP & Email profiles<br>3. Maker verifies duplicate blocking<br>4. Approver approves and rejects create requests |
+| Corporate > Edit | 1. Maker validates edit guards and submits update<br>2. Maker verifies duplicate edit is blocked<br>3. Approver approves update |
+| Corporate > Delete | 1. Maker verifies update and submits delete<br>2. Maker verifies duplicate delete is blocked<br>3. Approver approves delete<br>4. Maker confirms deleted |
+| Incoming > Create | 1. Maker validates form guards, creates profiles, verifies duplicate<br>2. Approver approves and rejects create requests |
+| Incoming > Edit | 1. Maker validates edit guards and submits update<br>2. Maker verifies duplicate edit is blocked<br>3. Approver approves update |
+| Incoming > Delete | 1. Maker verifies update and submits delete<br>2. Maker verifies duplicate delete is blocked<br>3. Approver approves delete<br>4. Maker confirms deleted |
+
+### Business Rule: Duplicate Pending Request
+
+ถ้ามี pending request ของ profile นั้นอยู่แล้ว (ยังไม่ถูก approve/reject) ระบบจะไม่อนุญาตให้ส่ง create/edit/delete ซ้ำ — จะแสดง notification:
+
+```
+TEST_CONTENT.notifications.duplicatePendingRequest
+= 'There is a pending request for this profile.'
+```
+
+ครอบคลุมใน step "duplicate blocking" ของทุก group
 
 ## 6. สรุปแนวทางใช้งาน
 
