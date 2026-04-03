@@ -10,8 +10,8 @@
 3. **Delete Flow** - ทดสอบการลบ profile พร้อมการตรวจสอบ, การป้องกันคำขอซ้ำ และกระบวนการอนุมัติ
 
 flow ทั้งหมดใช้รูปแบบการทำงานแบบ Maker-Approver โดยที่:
-- **Maker** (บัญชีผู้สร้าง: `corporatereport02@scbcorp.onmicrosoft.com`) สร้าง/แก้ไข/ลบ profiles
-- **Approver** (บัญชีผู้อนุมัติ: `corporatereport04@scbcorp.onmicrosoft.com`) อนุมัติหรือปฏิเสธคำขอ
+- **Maker** (บัญชีผู้สร้าง: `maker@example.com`) สร้าง/แก้ไข/ลบ profiles
+- **Approver** (บัญชีผู้อนุมัติ: `approver@example.com`) อนุมัติหรือปฏิเสธคำขอ
 
 ---
 
@@ -45,7 +45,7 @@ flow ทั้งหมดใช้รูปแบบการทำงานแ
    - ตรวจสอบว่าช่องกรอกชื่อผู้ใช้ (textbox ชื่อ "Enter your email, phone, or") แสดงหรือไม่ (timeout: 5000ms)
    - ถ้าแสดง:
      - กดที่ช่องกรอกชื่อผู้ใช้
-     - กรอก: `corporatereport02@scbcorp.onmicrosoft.com`
+     - กรอก: `maker@example.com`
      - รอให้ปุ่ม "Next" พร้อมใช้งาน
      - กดปุ่ม "Next"
      - รอให้หน้าถึงสถานะ 'networkidle' (timeout: 15000ms)
@@ -54,7 +54,7 @@ flow ทั้งหมดใช้รูปแบบการทำงานแ
    - ตรวจสอบว่า textbox รหัสผ่าน (ชื่อ "Enter the password for") แสดงหรือไม่ (timeout: 15000ms)
    - ถ้าแสดง: กดที่ช่อง textbox รหัสผ่าน
    - รอให้ช่องกรอกรหัสผ่าน (#i0118) แสดงขึ้น (timeout: 15000ms)
-   - กรอกรหัสผ่าน: `CORPREPORT2!scb2026$`
+   - กรอกรหัสผ่าน: `example-maker-password`
 10. **ลงชื่อเข้าใช้**:
     - รอให้ปุ่ม "Sign in" แสดงขึ้น (timeout: 15000ms)
     - รอให้ปุ่ม "Sign in" พร้อมใช้งาน (timeout: 5000ms)
@@ -278,10 +278,10 @@ flow ทั้งหมดใช้รูปแบบการทำงานแ
 5. ถ้าปุ่ม "Use another account" แสดง ระบบจะกดให้
 6. รอให้ 'networkidle'
 7. **กรอกชื่อผู้ใช้** (เงื่อนไข):
-   - ถ้าช่องกรอกชื่อผู้ใช้แสดง: กรอกด้วย `corporatereport04@scbcorp.onmicrosoft.com`
+   - ถ้าช่องกรอกชื่อผู้ใช้แสดง: กรอกด้วย `approver@example.com`
    - กด "Next" ถ้ากรอกชื่อผู้ใช้แล้ว
 8. **กรอกรหัสผ่าน**:
-   - กรอกรหัสผ่านด้วย: `CORPREPORT4!scb2026$`
+   - กรอกรหัสผ่านด้วย: `example-approver-password`
 9. **ลงชื่อเข้าใช้** และจัดการกับคำถาม stay signed in
 
 **ผลลัพธ์**: เข้าสู่ระบบในฐานะ Approver
