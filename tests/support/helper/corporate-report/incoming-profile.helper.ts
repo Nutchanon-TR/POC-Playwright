@@ -29,12 +29,6 @@ export async function openIncomingProfileAddForm(page: Page) {
     ).toBeVisible();
 }
 
-async function submitIncomingProfile(page: Page) {
-    const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
-    await expect(submitButton).toBeEnabled();
-    await submitButton.click();
-}
-
 function waitForIncomingProfileResponse(page: Page) {
     return page.waitForResponse(
         (res) =>
@@ -88,21 +82,7 @@ export async function createIncomingProfile(
         remark: profile.remark,
     });
 
-    // Submit with retry on 429
-    await submitWithRetryOn429(page, async () => {
-        const responsePromise = page.waitForResponse(
-            (res) =>
-                res.url().includes(API_PATHS.corporateReport) &&
-                res.url().includes(API_PATHS.incomingProfiles) &&
-                res.request().method() !== 'GET' &&
-                (res.status() === 200 || res.status() === 429)
-        );
-        await submitIncomingProfile(page);
-        await responsePromise;
-    }, {
-        logPrefix: 'Create Incoming Profile',
-        responseUrlIncludes: [API_PATHS.incomingProfiles],
-    });
+    await submitWithRetryOn429(page);
 
     await expect(page).toHaveURL(URLS.incomingProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);

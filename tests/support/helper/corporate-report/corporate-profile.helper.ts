@@ -111,27 +111,7 @@ export async function createSftpCorporateProfile(
     await selectCorporateSendType(page, profile.sendType);
     await fillCorporateProfileBaseFields(page, profile);
 
-    // Submit with retry on 429
-    await submitWithRetryOn429(page, async () => {
-        // WORKAROUND: Frontend bug - submit button may stay disabled even with valid data
-        const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
-        const isEnabled = await submitButton.isEnabled().catch(() => false);
-
-        if (isEnabled) {
-            await submitButton.click();
-        } else {
-            // Force submit by calling form's onFinish handler
-            await page.evaluate(() => {
-                const formElement = document.querySelector('form[name="validateOnly"]') as any;
-                if (formElement) {
-                    const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-                    formElement.dispatchEvent(submitEvent);
-                }
-            });
-        }
-    }, {
-        logPrefix: 'Create SFTP Corporate Profile',
-    });
+    await submitWithRetryOn429(page);
 
     await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
@@ -150,14 +130,7 @@ export async function createEmailCorporateProfile(
         checkRound1: true,
     });
 
-    // Submit with retry on 429
-    await submitWithRetryOn429(page, async () => {
-        const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
-        await expect(submitButton).toBeEnabled({ timeout: 10000 });
-        await submitButton.click();
-    }, {
-        logPrefix: 'Create Email Corporate Profile',
-    });
+    await submitWithRetryOn429(page);
 
     await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });
     await closeSuccessDialog(page);
@@ -202,8 +175,7 @@ export async function editCorporateProfile(
         .getByRole('textbox', { name: UI_TEXT.fields.corporateNameEnglish })
         .fill(options.englishName);
     await page.getByRole('textbox', { name: UI_TEXT.fields.remark }).fill(options.remark);
-    await page.getByRole('button', { name: UI_TEXT.buttons.save }).click();
-    await confirmVisibleDialog(page, PATTERNS.confirmSave);
+    await submitWithRetryOn429(page, 'edit');
     await closeSuccessDialog(page);
 }
 
@@ -247,41 +219,8 @@ export async function openEmailCreateForm(
     await fillCorporateEmailFields(page, emailOptions);
 }
 
-export async function submitCorporateCreateForm(
-    page: Page,
-    logPrefix: string,
-    options: {
-        force?: boolean;
-        settleDelayMs?: number;
-        onRetry?: (attempt: number) => Promise<void> | void;
-    } = {}
-) {
-    await submitWithRetryOn429(page, async () => {
-        const submitButton = page.getByRole('button', { name: UI_TEXT.buttons.submit });
-
-        if (options.force) {
-            await submitButton.click({ force: true });
-            return;
-        }
-
-        const isEnabled = await submitButton.isEnabled().catch(() => false);
-        if (isEnabled) {
-            await submitButton.click();
-            return;
-        }
-
-        await page.evaluate(() => {
-            const formElement = document.querySelector('form[name="validateOnly"]');
-            if (formElement) {
-                const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-                formElement.dispatchEvent(submitEvent);
-            }
-        });
-    }, {
-        logPrefix,
-        onRetry: options.onRetry,
-        settleDelayMs: options.settleDelayMs,
-    });
+export async function submitCorporateCreateForm(page: Page): Promise<void> {
+    await submitWithRetryOn429(page);
 }
 
 export async function closeNotificationAndClearForm(page: Page) {

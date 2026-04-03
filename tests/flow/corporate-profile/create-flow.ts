@@ -116,7 +116,7 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
                 checkRound1: true,
             });
             await removeCorporateEmail(page, extraEmail);
-            await submitCorporateCreateForm(page, 'Create Approved Email Corporate Profile');
+            await submitCorporateCreateForm(page);
             await expect(page).toHaveURL(URLS.corporateProfilesPattern, { timeout: 15000 });
             await closeSuccessDialog(page);
 
@@ -141,20 +141,12 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             };
 
             await reopenDuplicateSftpForm();
-            await submitCorporateCreateForm(page, 'Duplicate SFTP Corporate Profile', {
-                force: true,
-                settleDelayMs: 1500,
-                onRetry: reopenDuplicateSftpForm,
-            });
+            await submitCorporateCreateForm(page);
             await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicateCorporateProfile);
             await closeNotificationAndClearForm(page);
 
             await reopenDuplicateEmailForm();
-            await submitCorporateCreateForm(page, 'Duplicate Email Corporate Profile', {
-                force: true,
-                settleDelayMs: 1500,
-                onRetry: reopenDuplicateEmailForm,
-            });
+            await submitCorporateCreateForm(page);
             await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicateCorporateProfile);
             await closeNotificationAndClearForm(page);
 
