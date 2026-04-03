@@ -6,6 +6,7 @@ import {
 } from '../../support/constant';
 import {
     actOnPendingRequest,
+    closeNotificationAndClearForm,
     createIncomingProfile,
     expectEmptyState,
     expectNotificationMessage,
@@ -76,10 +77,12 @@ export function incomingCreateFlow(ctx: { runData: () => TestRunData }) {
             });
             await page.getByRole('button', { name: UI_TEXT.buttons.submit }).click();
             await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicateIncomingProfile);
-            await page.getByRole('button', { name: /Clear/i }).click();
+            await closeNotificationAndClearForm(page);
 
             await createIncomingProfile(page, rejectedIncoming);
             await signOut(page);
+            await page.waitForTimeout(5000);
+            await page.context().clearCookies();
         });
 
         await test.step('2. Approver approves and rejects create requests', async () => {

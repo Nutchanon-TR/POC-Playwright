@@ -5,7 +5,7 @@ export const CREDENTIALS = {
     },
     approver: {
         username: process.env.APPROVER_USERNAME || 'corporatereport04@scbcorp.onmicrosoft.com',
-        password: process.env.APPROVER_PASSWORD || 'CORPREPORT2!scb2026$',
+        password: process.env.APPROVER_PASSWORD || 'CORPREPORT4!scb2026$',
     },
 } as const;
 
