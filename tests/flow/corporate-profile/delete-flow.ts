@@ -31,7 +31,7 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.creator.username,
                 password: CREDENTIALS.creator.password,
-                useAnotherAccount: true,
+                
             });
 
             await searchCorporateProfile(page, emailApproved.corporateId);
@@ -74,7 +74,7 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.approver.username,
                 password: CREDENTIALS.approver.password,
-                useAnotherAccount: true,
+                
             });
 
             await actOnPendingRequest(page, {
@@ -94,7 +94,7 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.creator.username,
                 password: CREDENTIALS.creator.password,
-                useAnotherAccount: true,
+                
             });
 
             await openCorporateProfilesWithSearch(page, emailApproved.corporateId);

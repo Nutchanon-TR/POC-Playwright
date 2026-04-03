@@ -30,7 +30,7 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.creator.username,
                 password: CREDENTIALS.creator.password,
-                useAnotherAccount: true,
+                
             });
 
             await searchIncomingProfile(page, approvedIncoming.updatedAccountNo || approvedIncoming.accountNo);
@@ -77,7 +77,7 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.approver.username,
                 password: CREDENTIALS.approver.password,
-                useAnotherAccount: true,
+                
             });
 
             await actOnPendingRequest(page, {
@@ -99,7 +99,7 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.creator.username,
                 password: CREDENTIALS.creator.password,
-                useAnotherAccount: true,
+                
             });
 
             await searchIncomingProfile(page, approvedIncoming.updatedAccountNo || approvedIncoming.accountNo);

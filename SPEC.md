@@ -112,7 +112,7 @@ await loginWithMicrosoft(page);
 await loginWithMicrosoft(page, {
   username: CREDENTIALS.approver.username,
   password: CREDENTIALS.approver.password,
-  useAnotherAccount: true,
+  
 });
 ```
 

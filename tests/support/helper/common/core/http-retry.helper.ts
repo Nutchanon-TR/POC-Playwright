@@ -23,5 +23,11 @@ export async function submitWithRetryOn429(
 
     if (got429) {
         await page.waitForTimeout(RATE_LIMIT_WAIT_MS);
+        if (mode === 'edit') {
+            await page.getByRole('button', { name: UI_TEXT.buttons.save }).click();
+            await page.getByRole('button', { name: 'Yes' }).click();
+        } else {
+            await page.getByRole('button', { name: UI_TEXT.buttons.genericSubmit }).click();
+        }
     }
 }

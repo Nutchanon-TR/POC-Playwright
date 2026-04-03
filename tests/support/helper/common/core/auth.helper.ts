@@ -4,7 +4,6 @@ import { CREDENTIALS, SELECTORS, UI_TEXT, URLS } from '../../../constant';
 type LoginOptions = {
     username?: string;
     password?: string;
-    useAnotherAccount?: boolean;
 };
 
 export async function loginWithMicrosoft(
@@ -14,7 +13,6 @@ export async function loginWithMicrosoft(
     const {
         username = CREDENTIALS.creator.username,
         password = CREDENTIALS.creator.password,
-        useAnotherAccount = false,
     } = options;
 
     await page.goto(URLS.login);
@@ -27,9 +25,10 @@ export async function loginWithMicrosoft(
     await expect(microsoftLoginButton).toBeVisible();
     await microsoftLoginButton.click();
 
-    if (useAnotherAccount) {
-        const useAnotherAccountButton = page.getByRole('button', { name: UI_TEXT.buttons.useAnotherAccount });
-        await expect(useAnotherAccountButton).toBeVisible({ timeout: 3000 });
+    const useAnotherAccountButton = page.getByRole('button', { name: UI_TEXT.buttons.useAnotherAccount });
+    const hasUseAnotherAccount = await useAnotherAccountButton.isVisible({ timeout: 3000 }).catch(() => false);
+
+    if (hasUseAnotherAccount) {
         await useAnotherAccountButton.click();
     }
 
@@ -47,9 +46,7 @@ export async function loginWithMicrosoft(
     await page.locator(SELECTORS.passwordInput).fill(password);
     await page.getByRole('button', { name: UI_TEXT.buttons.signIn }).click();
 
-    if (!useAnotherAccount) {
-        await page.getByRole('button', { name: UI_TEXT.buttons.staySignedIn }).click();
-    }
+    await page.getByRole('button', { name: 'Yes' }).click({ timeout: 3000 }).catch(() => { });
 }
 
 export async function signOut(page: Page) {

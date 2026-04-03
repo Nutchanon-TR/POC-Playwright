@@ -91,7 +91,6 @@ export function incomingCreateFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.approver.username,
                 password: CREDENTIALS.approver.password,
-                useAnotherAccount: true,
             });
 
             await actOnPendingRequest(page, {

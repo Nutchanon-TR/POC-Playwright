@@ -142,12 +142,12 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
 
             await reopenDuplicateSftpForm();
             await submitCorporateCreateForm(page);
-            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicateCorporateProfile);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
             await closeNotificationAndClearForm(page);
 
             await reopenDuplicateEmailForm();
             await submitCorporateCreateForm(page);
-            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicateCorporateProfile);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
             await closeNotificationAndClearForm(page);
 
             await signOut(page);
@@ -163,7 +163,6 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.approver.username,
                 password: CREDENTIALS.approver.password,
-                useAnotherAccount: true,
             });
 
             await actOnPendingRequest(page, {

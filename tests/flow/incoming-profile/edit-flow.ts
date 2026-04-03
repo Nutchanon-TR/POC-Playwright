@@ -28,8 +28,7 @@ export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
 
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.creator.username,
-                password: CREDENTIALS.creator.password,
-                useAnotherAccount: true,
+                password: CREDENTIALS.creator.password
             });
 
             await searchIncomingProfile(page, approvedIncoming.accountNo);
@@ -84,8 +83,7 @@ export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
 
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.approver.username,
-                password: CREDENTIALS.approver.password,
-                useAnotherAccount: true,
+                password: CREDENTIALS.approver.password
             });
 
             await actOnPendingRequest(page, {
