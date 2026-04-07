@@ -25,7 +25,7 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
         test.setTimeout(600000);
 
         await test.step('1. Maker verifies update and submits delete', async () => {
-            const { emailApproved } = ctx.runData().corporateProfiles;
+            const { emailApproved, sftpApproved } = ctx.runData().corporateProfiles;
 
             await page.waitForLoadState('networkidle');
             await loginWithMicrosoft(page, {
@@ -48,10 +48,16 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
                 rowTexts: [emailApproved.corporateId, emailApproved.updatedRemark],
             });
 
+            await searchCorporateProfile(page, sftpApproved.corporateId);
+            await deleteCorporateProfile(page, {
+                corporateId: sftpApproved.corporateId,
+                rowTexts: [sftpApproved.corporateId, sftpApproved.remark],
+            });
+
         });
 
         await test.step('2. Maker verifies duplicate delete is blocked', async () => {
-            const { emailApproved } = ctx.runData().corporateProfiles;
+            const { emailApproved, sftpApproved } = ctx.runData().corporateProfiles;
 
             await searchCorporateProfile(page, emailApproved.corporateId);
             const row = await findTableRowByTexts(page, [
@@ -63,12 +69,22 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await confirmVisibleDialog(page, PATTERNS.confirmDelete);
             await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
 
+            await searchCorporateProfile(page, sftpApproved.corporateId);
+            const sftpRow = await findTableRowByTexts(page, [
+                sftpApproved.corporateId,
+                sftpApproved.remark,
+            ]);
+            await clickRowAction(sftpRow, 'delete');
+            await page.getByRole('button', { name: 'Yes' }).click();
+            await confirmVisibleDialog(page, PATTERNS.confirmDelete);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
+
             await signOut(page);
             await page.waitForTimeout(3000);
         });
 
         await test.step('3. Approver approves delete', async () => {
-            const { emailApproved } = ctx.runData().corporateProfiles;
+            const { emailApproved, sftpApproved } = ctx.runData().corporateProfiles;
 
             await page.waitForLoadState('networkidle');
             await loginWithMicrosoft(page, {
@@ -83,12 +99,18 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
                 action: 'approve',
             });
 
+            await actOnPendingRequest(page, {
+                tab: UI_TEXT.tabs.corporate,
+                texts: [sftpApproved.corporateId, sftpApproved.remark, PATTERNS.deleteRequest],
+                action: 'approve',
+            });
+
             await signOut(page);
             await page.waitForTimeout(3000);
         });
 
         await test.step('4. Maker confirms deleted', async () => {
-            const { emailApproved } = ctx.runData().corporateProfiles;
+            const { emailApproved, sftpApproved } = ctx.runData().corporateProfiles;
 
             await page.waitForLoadState('networkidle');
             await loginWithMicrosoft(page, {
@@ -98,6 +120,9 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             });
 
             await openCorporateProfilesWithSearch(page, emailApproved.corporateId);
+            await expectEmptyState(page);
+
+            await openCorporateProfilesWithSearch(page, sftpApproved.corporateId);
             await expectEmptyState(page);
         });
     });
