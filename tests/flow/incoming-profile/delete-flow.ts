@@ -17,6 +17,7 @@ import {
     loginWithMicrosoft,
     searchIncomingProfile,
     signOut,
+    submitWithRetryOn429,
     type TestRunData,
 } from '../../support/helper';
 
@@ -64,7 +65,7 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
                 approvedIncoming.updatedStatus ?? UI_TEXT.status.inactive,
             ]);
             await clickRowAction(row, 'delete');
-            await page.getByRole('button', { name: 'Yes' }).click();
+            await submitWithRetryOn429(page, 'delete');
             await confirmVisibleDialog(page, PATTERNS.confirmDelete);
             await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
 
