@@ -81,7 +81,7 @@ export function incomingCreateFlow(ctx: { runData: () => TestRunData }) {
 
             await createIncomingProfile(page, rejectedIncoming);
             await signOut(page);
-            await page.waitForTimeout(5000);
+            await page.waitForTimeout(3000);
             await page.context().clearCookies();
         });
 

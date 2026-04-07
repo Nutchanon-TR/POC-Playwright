@@ -5,8 +5,8 @@ export async function closeSuccessDialog(page: Page) {
     await yesBtn.click({ timeout: 2000 }).catch(() => {});
 
     const successDialog = page.getByRole('dialog').filter({ hasText: 'Request Submitted!' });
-    await successDialog.waitFor({ state: 'visible', timeout: 10000 });
-    await successDialog.getByRole('button', { name: /ok/i }).click();
+    // await successDialog.waitFor({ state: 'visible', timeout: 10000 });
+    await successDialog.getByRole('button', { name: /ok/i }).click({timeout: 3000});
 }
 
 export async function confirmVisibleDialog(

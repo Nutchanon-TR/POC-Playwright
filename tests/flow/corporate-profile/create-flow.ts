@@ -151,7 +151,7 @@ export function corporateCreateFlow(ctx: { runData: () => TestRunData }) {
             await closeNotificationAndClearForm(page);
 
             await signOut(page);
-            await page.waitForTimeout(5000);
+            await page.waitForTimeout(3000);
             await page.context().clearCookies();
         });
 
