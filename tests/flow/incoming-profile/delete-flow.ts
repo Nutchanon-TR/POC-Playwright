@@ -10,6 +10,7 @@ import {
     clickRowAction,
     confirmVisibleDialog,
     deleteIncomingProfile,
+    deleteWithRetryOn429,
     expectEmptyState,
     expectNotificationMessage,
     findTableRowByTexts,
@@ -17,7 +18,6 @@ import {
     loginWithMicrosoft,
     searchIncomingProfile,
     signOut,
-    submitWithRetryOn429,
     type TestRunData,
 } from '../../support/helper';
 
@@ -65,9 +65,9 @@ export function incomingDeleteFlow(ctx: { runData: () => TestRunData }) {
                 approvedIncoming.updatedStatus ?? UI_TEXT.status.inactive,
             ]);
             await clickRowAction(row, 'delete');
-            await submitWithRetryOn429(page, 'delete');
+            await deleteWithRetryOn429(page);
             await confirmVisibleDialog(page, PATTERNS.confirmDelete);
-            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicateIncomingPendingRequest);
 
             await signOut(page);
         });
