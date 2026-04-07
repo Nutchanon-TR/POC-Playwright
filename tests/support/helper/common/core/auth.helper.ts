@@ -25,12 +25,7 @@ export async function loginWithMicrosoft(
     await expect(microsoftLoginButton).toBeVisible();
     await microsoftLoginButton.click();
 
-    const useAnotherAccountButton = page.getByRole('button', { name: UI_TEXT.buttons.useAnotherAccount });
-    const hasUseAnotherAccount = await useAnotherAccountButton.isVisible({ timeout: 3000 }).catch(() => false);
-
-    if (hasUseAnotherAccount) {
-        await useAnotherAccountButton.click();
-    }
+    await page.getByRole('button', { name: UI_TEXT.buttons.useAnotherAccount }).click({ timeout: 5000 }).catch(() => { });
 
     await page.waitForLoadState('networkidle', { timeout: 15000 });
     const usernameField = page.getByRole('textbox', { name: UI_TEXT.fields.username });
@@ -46,7 +41,7 @@ export async function loginWithMicrosoft(
     await page.locator(SELECTORS.passwordInput).fill(password);
     await page.getByRole('button', { name: UI_TEXT.buttons.signIn }).click();
 
-    await page.getByRole('button', { name: 'Yes' }).click({ timeout: 3000 }).catch(() => { });
+    await page.getByRole('button', { name: 'No' }).click({ timeout: 3000 }).catch(() => { });
 }
 
 export async function signOut(page: Page) {

@@ -13,6 +13,7 @@ import {
     findTableRowByTexts,
     formatIncomingAccountPattern,
     loginWithMicrosoft,
+    randomDigits,
     searchIncomingProfile,
     signOut,
     submitWithRetryOn429,
@@ -68,10 +69,12 @@ export function incomingEditFlow(ctx: { runData: () => TestRunData }) {
             const row = await findTableRowByTexts(page, [approvedIncoming.remark]);
             await clickRowAction(row, 'edit');
 
-            const remarkField = page.getByPlaceholder(UI_TEXT.placeholders.incomingRemark);
-            await remarkField.fill('Duplicate edit attempt');
+            const accountField = page.getByRole('textbox', { name: '* Account No :' });
+            const randomAccountNo = randomDigits(10);
+            await accountField.click();
+            await accountField.fill(randomAccountNo);
             await submitWithRetryOn429(page, 'edit-incoming');
-            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicatePendingRequest);
+            await expectNotificationMessage(page, TEST_CONTENT.notifications.duplicateIncomingPendingRequest);
 
             await signOut(page);
         });

@@ -31,6 +31,7 @@ export const TEST_CONTENT = {
         duplicateCorporateProfile: 'Corporate profile already exists.',
         duplicateIncomingProfile: 'Incoming profile already exists.',
         duplicatePendingRequest: 'There is a pending request for this profile.',
+        duplicateIncomingPendingRequest: 'There is a pending request for this incoming profile.',
     },
     validationMessages: {
         corporateIdFormat:
