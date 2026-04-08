@@ -31,7 +31,7 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.creator.username,
                 password: CREDENTIALS.creator.password,
-                
+
             });
 
             await searchCorporateProfile(page, emailApproved.corporateId);
@@ -48,12 +48,10 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
                 rowTexts: [emailApproved.corporateId, emailApproved.updatedRemark],
             });
 
-            await searchCorporateProfile(page, sftpApproved.corporateId);
             await deleteCorporateProfile(page, {
                 corporateId: sftpApproved.corporateId,
-                rowTexts: [sftpApproved.corporateId, sftpApproved.remark],
+                rowTexts: [sftpApproved.corporateId, sftpApproved.englishName, sftpApproved.remark],
             });
-
         });
 
         await test.step('2. Maker verifies duplicate delete is blocked', async () => {
@@ -90,7 +88,7 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.approver.username,
                 password: CREDENTIALS.approver.password,
-                
+
             });
 
             await actOnPendingRequest(page, {
@@ -116,7 +114,7 @@ export function corporateDeleteFlow(ctx: { runData: () => TestRunData }) {
             await loginWithMicrosoft(page, {
                 username: CREDENTIALS.creator.username,
                 password: CREDENTIALS.creator.password,
-                
+
             });
 
             await openCorporateProfilesWithSearch(page, emailApproved.corporateId);

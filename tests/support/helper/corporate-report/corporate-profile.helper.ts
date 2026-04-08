@@ -138,6 +138,7 @@ export async function createEmailCorporateProfile(
 
 export async function searchCorporateProfile(page: Page, corporateId: string) {
     await openCorporateProfiles(page);
+    await page.getByRole('button', { name: 'clear Clear' }).click();
     await selectAutocompleteOption(
         page,
         UI_TEXT.fields.searchCorporateId,
@@ -186,6 +187,8 @@ export async function deleteCorporateProfile(
         rowTexts: Array<string | RegExp>;
     }
 ) {
+    await page.getByRole('button', { name: 'clear Clear' }).click();
+
     await searchCorporateProfile(page, options.corporateId);
     const row = await findTableRowByTexts(page, options.rowTexts);
     await clickRowAction(row, 'delete');
